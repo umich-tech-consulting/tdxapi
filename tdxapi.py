@@ -1,8 +1,12 @@
 import requests
 import json
+import os
+from datetime import date
 
-tdx_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6Im93YWlua0B1bWljaC5lZHUiLCJ0ZHhfZW50aXR5IjoiMiIsInRkeF9wYXJ0aXRpb24iOiI1NSIsIm5iZiI6MTY3Mjc1NTEzMiwiZXhwIjoxNjcyODQxNTMyLCJpYXQiOjE2NzI3NTUxMzIsImlzcyI6IlREIiwiYXVkIjoiaHR0cHM6Ly93d3cudGVhbWR5bmFtaXguY29tLyJ9.jqV8GqJ6H2KG5jhMzQ3jFl5SlXLYg1CWUw697Ds6j6I"
+tdx_key = os.getenv("TDX_KEY")
+
 class TeamDynamixInstance:
+    no_owner = '00000000-0000-0000-0000-000000000000'
     _populating_dict = {
         "AppIDs": {
             "Name": "Name",
@@ -19,6 +23,11 @@ class TeamDynamixInstance:
             "ID": "ID",
             "Endpoint": "assets/statuses"
         },
+        "TicketStatusIDs": {
+            "Name": "Name",
+            "ID": "ID",
+            "Endpoint": "tickets/statuses"
+        }
     }
     def __init__(self, domain = None, auth_token = None, sandbox = True):
         self.domain = domain
@@ -28,8 +37,8 @@ class TeamDynamixInstance:
         pass
 
     def initialize(self):
-        for ids in self._populating_dict.keys():
-            self._populate_ids(ids)
+        self._populate_ids("AppIDs")
+        self._populate_ids("LocationIDs")
 
     def authenticate(self):
         response = self._make_request("get", "auth/getuser", True)
@@ -56,15 +65,23 @@ class TeamDynamixInstance:
         asset = json.loads(response.text)
         return asset
 
-    def search_tickets(self, app_name, requester_uid, status_name):
+    def search_tickets(self, app_name, requester_uid, status_names: list):
+        status_ids = []
+        for status_name in status_names:
+            status_ids.append(self.content[app_name]["TicketStatusIDs"][status_name])
         app_id = self.content["AppIDs"][app_name]
         body = {
             "RequestorUids": [requester_uid],
-            "StatusIDs": self.content["TicketStatusIDs"][status_name]
+            "StatusIDs": status_ids
         }
         response = self._make_request("post", f"{app_id}/tickets/search", body=body)
         tickets = json.loads(response.text)
         return tickets
+
+    def update_asset(self, app_name, asset):
+        app_id = self.content["AppIDs"][app_name]
+        response = self._make_request("post", f"{app_id}/assets/{asset['ID']}", body=asset)
+        return response
 
     def _populate_ids(self, type, app_name = None):
         id = self._populating_dict[type]["ID"]
@@ -73,13 +90,13 @@ class TeamDynamixInstance:
         content = self.content
 
         if(app_name):
-            endpoint = self.content["AppIDs"][app_name] + f"/{endpoint}"
+            endpoint = str(self.content["AppIDs"][app_name]) + f"/{endpoint}"
         response = self._make_request("get", endpoint)
         objs = json.loads(response.text)
 
         # If working with a specific app name, move into that content context
-        if(app_name not in self.content):
-            self.content[app_name] = {}
+        if(app_name and app_name not in self.content):
+            content[app_name] = {}
             content = self.content[app_name]
 
         if(type not in content):
@@ -111,7 +128,21 @@ class TeamDynamixInstance:
 
 tdx = TeamDynamixInstance("teamdynamix.umich.edu", tdx_key)
 tdx.initialize()
-asset = tdx.search_assets("ITS EUC Assets/CIs", "SAH00001")
+tdx._populate_ids("AssetStatusIDs", "ITS EUC Assets/CIs")
+tdx._populate_ids("TicketStatusIDs", "ITS Tickets")
+asset = tdx.search_assets("ITS EUC Assets/CIs", "SAH00002")
 owner = asset["OwningCustomerID"]
-tickets = tdx.search_tickets("ITS Tickets", owner, "Closed")
+tickets = tdx.search_tickets("ITS Tickets", owner, ["Closed", "Scheduled"])
+
+asset["ID"] = asset["ID"]
+asset["LocationID"] = tdx.content["LocationIDs"]["MICHIGAN UNION"]
+asset["StatusID"] = tdx.content["ITS EUC Assets/CIs"]["AssetStatusIDs"]["In Stock - Reserved"]
+asset["OwningCustomerID"] = tdx.no_owner
+asset["SerialNumber"] = asset["SerialNumber"]
+for attr in asset["Attributes"]:
+    if(attr["Name"] == "Notes"):
+        attr["Value"] = "Scanned and cleared by Tech Consulting"
+    if(attr["Name"] == "Last Inventoried"):
+        attr["Value"] = date.today().strftime("%m/%d/%Y")
+tdx.update_asset("ITS EUC Assets/CIs", asset)
 pass

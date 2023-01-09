@@ -131,3 +131,4 @@ dmypy.json
 bin
 include
 lib64
+.vscode
