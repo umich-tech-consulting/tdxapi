@@ -56,8 +56,6 @@ class TeamDynamixInstance:
     def initialize(self):
         self._populate_ids("AppIDs")
         self._populate_ids("LocationIDs")
-        self._populate_ids("AssetStatusIDs", "ITS EUC Assets/CIs")
-        self._populate_ids("TicketStatusIDs", "ITS Tickets")
         self._populate_ids("AssetAttributes")
         self._populate_ids("TicketAttributes")
 
@@ -98,6 +96,8 @@ class TeamDynamixInstance:
         }
         response = self._make_request("post", f"{app_id}/tickets/search", body=body)
         tickets = json.loads(response.text)
+        if(len(tickets) == 1):
+            return tickets[0]
         return tickets
 
     def update_asset(self, app_name, asset):
@@ -172,6 +172,9 @@ class TeamDynamixInstance:
         for obj in objs:
             content[type][obj[name]] = obj[id]
 
+    def populate_ids_for_app(self, app_type, app_name):
+        self._populate_ids(app_type, app_name)
+
     def _make_request(self, type, endpoint, requires_auth = True, body = {}):
         headers = {
             "Content-Type": "application/json; charset=utf-8",
@@ -193,16 +196,3 @@ class TeamDynamixInstance:
             response = requests.post(url=url, headers=headers, json=body)
 
         return response
-
-tdx = TeamDynamixInstance("teamdynamix.umich.edu", tdx_key)
-tdx.initialize()
-asset = tdx.search_assets("ITS EUC Assets/CIs", "SAH01201")
-tickets = tdx.search_tickets("ITS Tickets", asset["OwningCustomerID"], ["Scheduled", "New", "Open"], "PLEASE RESPOND: Sites @ Home Laptop Loan Return or Extension")
-
-if(len(tickets) != 1):
-    print("Couldn't find one matching ticket for S@H drop off")
-else:
-    tdx.update_ticket_status(tickets[0]["ID"], "Closed", "Dropped off at union", "ITS Tickets")
-    
-tdx.check_in_asset(asset, "ITS EUC Assets/CIs", "MICHIGAN UNION", "In Stock - Reserved", tdx.no_owner, "Checked in by Tech Consulting")
-pass
