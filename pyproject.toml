@@ -2,10 +2,7 @@
 name = "tdxapi"
 version = "0.0.1"
 authors = [
-    {
-        name="Owain Kert",
-        email="owaink@umich.edu"
-    }
+    { name="Owain Kert", email="owaink@umich.edu" },
 ]
 description = "Python wrapper for the TeamDynamix Web Api"
 readme = "README.md"

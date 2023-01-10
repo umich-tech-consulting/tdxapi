@@ -3,8 +3,6 @@ import json
 import os
 from datetime import date
 
-tdx_key = os.getenv("TDX_KEY")
-
 class TeamDynamixInstance:
     no_owner = '00000000-0000-0000-0000-000000000000'
     # These are hardcoded into the API
