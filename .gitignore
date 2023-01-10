@@ -132,3 +132,4 @@ bin
 include
 lib64
 .vscode
+pyvenv.cfg

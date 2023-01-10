@@ -1,0 +1,16 @@
+[project]
+name = "tdxapi"
+version = "0.0.1"
+authors = [
+    {
+        name="Owain Kert",
+        email="owaink@umich.edu"
+    }
+]
+description = "Python wrapper for the TeamDynamix Web Api"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = []
+
+[project.urls]
+"Homepage" = "https://github.com/owaink/tdxapi"
