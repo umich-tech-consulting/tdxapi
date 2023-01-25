@@ -4,9 +4,9 @@ import os
 from datetime import date
 
 class TeamDynamixInstance:
-    no_owner = '00000000-0000-0000-0000-000000000000'
+    _no_owner = '00000000-0000-0000-0000-000000000000'
     # These are hardcoded into the API
-    component_ids = {
+    _component_ids = {
         "Ticket": 9,
         "Asset": 27
     }
@@ -35,12 +35,12 @@ class TeamDynamixInstance:
         "AssetAttributes": {
             "Name": "Name",
             "ID": "ID",
-            "Endpoint": f"attributes/custom?componentId={component_ids['Asset']}"
+            "Endpoint": f"attributes/custom?componentId={_component_ids['Asset']}"
         },
         "TicketAttributes": {
             "Name": "Name",
             "ID": "ID",
-            "Endpoint": f"attributes/custom?componentId={component_ids['Ticket']}"
+            "Endpoint": f"attributes/custom?componentId={_component_ids['Ticket']}"
         }
     }
     
@@ -69,6 +69,7 @@ class TeamDynamixInstance:
         self._populate_ids("LocationIDs")
         self._populate_ids("AssetAttributes")
         self._populate_ids("TicketAttributes")
+        self._populate_group_ids()
 
     def populate_ids_for_app(self, app_type, app_name):
         self._populate_ids(app_type, app_name)
@@ -140,7 +141,7 @@ class TeamDynamixInstance:
             print(f"Unable to attach asset {asset_id} to ticket {ticket_id}: {response.text}")
         return response
 
-    def search_tickets(self, app_name, requester_uid, status_names: list, title: str):
+    def search_tickets(self, app_name, requester_uid, status_names: list, title: str, responsible_group_name: str = None):
         status_ids = []
         for status_name in status_names:
             status_ids.append(self.content[app_name]["TicketStatusIDs"][status_name])
@@ -148,11 +149,19 @@ class TeamDynamixInstance:
         body = {
             "RequestorUids": [requester_uid],
             "StatusIDs": status_ids,
-            "Title": title
+            "Title": title,
         }
+        if(responsible_group_name != None):
+            body["ResponsiblityGroupIDs"] = [self.content["GroupIDs"][responsible_group_name]]
         response = self._make_request("post", f"{app_id}/tickets/search", body=body)
         tickets = json.loads(response.text)
         return tickets
+        
+    def get_ticket(self, app_name, id):
+        app_id = self.content["AppIDs"][app_name]
+        response = self._make_request("get", f"{app_id}/tickets/{id}")
+        ticket = json.loads(response.text)
+        return ticket
 
     def update_ticket_status(self, ticket_id, status_name, comments, app_name):
         app_id = self.content["AppIDs"][app_name]
@@ -167,7 +176,42 @@ class TeamDynamixInstance:
         if(response.status_code != 200):
             print(f"Unable to update ticket status: {response.text}")
         return response
+
+    #####################
+    #                   #
+    #      People       #
+    #                   #
+    #####################
+
+    def search_people(self, username):
+        body = {
+            "AlternateID": username
+        }
+        response = self._make_request("post", f"people/search", body=body)
+
+        if(response.status_code != 200):
+            print(f"Unable to search user: {response.text}")
+            return
+        people = json.loads(response.text)
+        return people
         
+
+    #####################
+    #                   #
+    #      Groups       #
+    #                   #
+    #####################
+
+    def _populate_group_ids(self):
+        response = self._make_request("post", "groups/search")
+        if(response.status_code != 200):
+            print("Could not populate groups")
+            return
+        groups = json.loads(response.text)
+        self.content["GroupIDs"] = {}
+        for group in groups:
+            self.content["GroupIDs"][group["Name"]] = group["ID"]
+        pass
     #####################
     #                   #
     #     Utilities     #
@@ -185,7 +229,7 @@ class TeamDynamixInstance:
         response = self._make_request("get", endpoint)
         objs = json.loads(response.text)
 
-        # If working with a specific app name, move into that content context
+        # If working with a specific app name, move into that app name's subdictionary
         if(app_name and app_name not in self.content):
             content[app_name] = {}
             content = self.content[app_name]
