@@ -155,13 +155,22 @@ class TeamDynamixInstance:
             body["ResponsiblityGroupIDs"] = [self.content["GroupIDs"][responsible_group_name]]
         response = self._make_request("post", f"{app_id}/tickets/search", body=body)
         tickets = json.loads(response.text)
-        return tickets
-        
+        filtered_tickets = []
+        for ticket in tickets:
+            if(ticket["Title"] == title):
+                filtered_tickets.append(ticket)
+        return filtered_tickets
+
     def get_ticket(self, app_name, id):
         app_id = self.content["AppIDs"][app_name]
         response = self._make_request("get", f"{app_id}/tickets/{id}")
         ticket = json.loads(response.text)
         return ticket
+        
+    def get_ticket_attribute(self, ticket, attr_name):
+        for attr in ticket["Attributes"]:
+            if(attr["Name"] == attr_name):
+                return attr
 
     def update_ticket_status(self, ticket_id, status_name, comments, app_name):
         app_id = self.content["AppIDs"][app_name]
