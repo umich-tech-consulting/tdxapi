@@ -45,17 +45,20 @@ class TeamDynamixInstance:
         }
     }
     
-    def __init__(self, domain = None, auth_token = None, sandbox = True) -> None:
-        """ Creates a new object for interacting with a TeamDynamix instance
+    def __init__(self, domain: str = None, auth_token: str = None, sandbox: bool = True, default_ticket_app_name: str = None, default_asset_app_name: str = None) -> None:
+        """Creates a new TDx object to interact with the remote instance
 
-        :param domain: Custom domain TDx instance is representing
-        :param auth_token: JWT formatted token for authenticating to TDx instance
-        :param sandbox: Whether or not the sandbox instance of TDx should be used
+        Args:
+            domain (str, optional): Domain of the remote instance (eg teamdynamix.umich.edu). Defaults to None.
+            auth_token (str, optional): Auth token provided from remote instance. Defaults to None.
+            sandbox (bool, optional): Whether to use the safe sandbox environment or not. Set to False to use production environment. Defaults to True.
         """
         self.domain = domain
         self.auth_token = auth_token
         self.sandbox = sandbox
         self.content = {}
+        self.default_ticket_app_name = default_ticket_app_name
+        self.default_asset_app_name = default_asset_app_name
 
     def check_authentication(self) -> bool:
         """Checks if current auth_token is authorized to the TDx instance
@@ -100,7 +103,7 @@ class TeamDynamixInstance:
     #                #
     ##################
 
-    def inventory_asset(self, asset: dict, app_name: str, location_name: str, status_name: str, owner_uid: str = None, notes: str = None) -> None:
+    def inventory_asset(self, asset: dict,  location_name: str, status_name: str, owner_uid: str = None, notes: str = None, app_name: str = None) -> None:
         """Updates the inventory status of an asset by updating location, status, owner, and notes
 
         Args:
@@ -111,7 +114,8 @@ class TeamDynamixInstance:
             owner_uid (str): New owner of the asset, removes owner if not given
             notes (str): New notes if provided, keeps previous notes if none given
         """
-
+        if(app_name == None):
+            app_name = self.default_asset_app_name
         asset["LocationID"] = self.content["LocationIDs"][location_name]
         asset["StatusID"] = self.content[app_name]["AssetStatusIDs"][status_name]
         if(owner_uid is not None):
@@ -137,7 +141,7 @@ class TeamDynamixInstance:
             })
         self.update_asset(app_name, asset)
 
-    def get_asset(self, app_name: str, asset_id: str) -> dict:
+    def get_asset(self, asset_id: str, app_name: str = None) -> dict:
         """Fetchs an asset and returns it in dictonary form
 
         Args:
@@ -147,12 +151,14 @@ class TeamDynamixInstance:
         Returns:
             dict: Asset as dictonary, includes custom attributes
         """
+        if(app_name == None):
+            app_name = self.default_asset_app_name
         app_id = self.content["AppIDs"][app_name]
         response = self._make_request("get", f"{app_id}/assets/{asset_id}")
         asset = json.loads(response.text)
         return asset
 
-    def search_assets(self, app_name: str, search_string: str) -> list:
+    def search_assets(self, search_string: str, app_name: str = None) -> list:
         """Searches for assets in the given app using the given search string and gives a list of matching assets as dictionaries
 
         Args:
@@ -162,6 +168,9 @@ class TeamDynamixInstance:
         Returns:
             list: A list of dictionaries representing assets, does not include custom attributes
         """
+
+        if(app_name == None):
+            app_name = self.default_asset_app_name
         app_id = self.content["AppIDs"][app_name]
         body = {
             "SerialLike": search_string
@@ -170,7 +179,7 @@ class TeamDynamixInstance:
         assets = json.loads(response.text)
         return assets
 
-    def update_asset(self, app_name: str, asset: dict) -> requests.Response:
+    def update_asset(self, asset: dict, app_name: str = None) -> requests.Response:
         """Updates an asset in TDx
 
         Args:
@@ -180,6 +189,8 @@ class TeamDynamixInstance:
         Returns:
             requests.Response: The response from the remote TDx instance, can be used for error handling but typically unconsumed
         """
+        if(app_name == None):
+            app_name = self.default_asset_app_name
         app_id = self.content["AppIDs"][app_name]
         response = self._make_request("post", f"{app_id}/assets/{asset['ID']}", body=asset)
         if(response.status_code != 200):
@@ -192,7 +203,7 @@ class TeamDynamixInstance:
     #                 #
     ###################
 
-    def attach_asset_to_ticket(self, ticket_app_name: str, ticket_id: str, asset_id: str) -> requests.Response:
+    def attach_asset_to_ticket(self, ticket_id: str, asset_id: str, ticket_app_name: str = None) -> requests.Response:
         """Attaches an asset to a ticket in a given ticket application
 
         Args:
@@ -203,13 +214,15 @@ class TeamDynamixInstance:
         Returns:
             requests.Response: Response from TDx, can be used for error handling
         """
+        if(ticket_app_name == None):
+            ticket_app_name = self.default_ticket_app_name
         app_id = self.content["AppIDs"][ticket_app_name]
         response = self._make_request("post", f"{app_id}/tickets/{ticket_id}/assets/{asset_id}")
         if(response.status_code != 200):
             print(f"Unable to attach asset {asset_id} to ticket {ticket_id}: {response.text}")
         return response
 
-    def search_tickets(self, app_name: str, requester_uid: str, status_names: list, title: str, responsible_group_name: str = None) -> list:
+    def search_tickets(self, requester_uid: str, status_names: list, title: str, responsible_group_name: str = None, app_name: str = None) -> list:
         """Searches a ticket application for a ticket matching the given search criteria
 
         Args:
@@ -222,6 +235,9 @@ class TeamDynamixInstance:
         Returns:
             list: A list of dictonaries representing tickets
         """
+
+        if(app_name == None):
+            app_name = self.default_ticket_app_name
         status_ids = []
         for status_name in status_names:
             status_ids.append(self.content[app_name]["TicketStatusIDs"][status_name])
@@ -242,7 +258,7 @@ class TeamDynamixInstance:
                 filtered_tickets.append(ticket)
         return filtered_tickets
 
-    def get_ticket(self, app_name: str, ticket_id: str) -> dict:
+    def get_ticket(self, ticket_id: str, app_name: str = None) -> dict:
         """Gets a full ticket based on ID, includes custom attributes
 
         Args:
@@ -252,6 +268,9 @@ class TeamDynamixInstance:
         Returns:
             dict: Dictonary representing the ticket
         """
+
+        if(app_name == None):
+            app_name = self.default_ticket_app_name
         app_id = self.content["AppIDs"][app_name]
         response = self._make_request("get", f"{app_id}/tickets/{ticket_id}")
         ticket = json.loads(response.text)
@@ -271,7 +290,7 @@ class TeamDynamixInstance:
             if(attr["Name"] == attr_name):
                 return attr
 
-    def update_ticket_status(self, ticket_id: str, status_name: str, comments: str, app_name: str) -> requests.Response:
+    def update_ticket_status(self, ticket_id: str, status_name: str, comments: str, app_name: str = None) -> requests.Response:
         """Updates a ticket to the given status with given comments
 
         Args:
@@ -283,6 +302,8 @@ class TeamDynamixInstance:
         Returns:
             requests.Response: Response from the TDx instance
         """
+        if(app_name == None):
+            app_name = self.default_ticket_app_name
         app_id = self.content["AppIDs"][app_name]
         status_id = self.content[app_name]["TicketStatusIDs"][status_name]
         body = {
