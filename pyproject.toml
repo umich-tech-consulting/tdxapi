@@ -1,6 +1,6 @@
 [project]
 name = "tdxapi"
-version = "0.0.6"
+version = "0.0.9"
 authors = [
     { name="Owain Kert", email="owaink@umich.edu" },
 ]

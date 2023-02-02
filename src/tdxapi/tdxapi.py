@@ -1,6 +1,6 @@
 import requests
 import json
-import os
+from tdxapi_exceptions import *
 from datetime import date
 
 class TeamDynamixInstance:
@@ -52,27 +52,37 @@ class TeamDynamixInstance:
             domain (str, optional): Domain of the remote instance (eg teamdynamix.umich.edu). Defaults to None.
             auth_token (str, optional): Auth token provided from remote instance. Defaults to None.
             sandbox (bool, optional): Whether to use the safe sandbox environment or not. Set to False to use production environment. Defaults to True.
+            default_ticket_app_name (str, optional): Ticket app to use when none is defined. Defaults to None.
+            default_asset_app_name (str, optional): Asset app to use when none is defined. Default to None.
         """
-        self.domain = domain
-        self.auth_token = auth_token
-        self.sandbox = sandbox
-        self.content = {}
-        self.default_ticket_app_name = default_ticket_app_name
-        self.default_asset_app_name = default_asset_app_name
+        self._domain = domain
+        self._auth_token = auth_token
+        self._sandbox = sandbox
+        self._content = {}
+        self._default_ticket_app_name = default_ticket_app_name
+        self._default_asset_app_name = default_asset_app_name
 
-    def check_authentication(self) -> bool:
-        """Checks if current auth_token is authorized to the TDx instance
+    def set_auth_token(self, token: str) -> None:
+        """Sets the authentication token for accessing remote TDx Instance
+        Tokens can be retrieved using any method here: https://teamdynamix.umich.edu/TDWebApi/Home/section/Auth
+
+        Args:
+            token (str): Token in JWT for authenticating to TDx
+        """
+        self._auth_token = token
+
+    def get_current_user(self) -> dict:
+        """Returns the currently logged in user, useful for testing if TDx can be accessed
 
         Returns:
             bool: Whether the TDx instance can be reached as an authenticated user
         """
         response = self._make_request("get", "auth/getuser", True)
         if(response.status_code == 200):
-            print(f"Logged in as {json.loads(response.text)['FullName']}")
-            return True
+            user = json.loads(response.text)
+            return user
         elif(response.status_code == 401):
-            print("Unable to get current user, please reauthenticate")
-            return False
+            raise NotAuthorizedException
         else:
             print(f"Something went wrong checking authentication: {response.text}")
             return False
@@ -139,7 +149,7 @@ class TeamDynamixInstance:
                 "ID": self.content["AssetAttributes"]["Notes"],
                 "Value": notes
             })
-        self.update_asset(app_name, asset)
+        self.update_asset(asset)
 
     def get_asset(self, asset_id: str, app_name: str = None) -> dict:
         """Fetchs an asset and returns it in dictonary form
