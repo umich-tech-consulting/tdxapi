@@ -1,7 +1,7 @@
 import requests
 import json
 from datetime import date
-from exceptions import *
+from tdxapi.exceptions import *
 
 class TeamDynamixInstance:
     _no_owner = '00000000-0000-0000-0000-000000000000'
