@@ -1,7 +1,7 @@
 import requests
 import json
-from tdxapi_exceptions import *
 from datetime import date
+from tdxapi_exceptions import *
 
 class TeamDynamixInstance:
     _no_owner = '00000000-0000-0000-0000-000000000000'
@@ -107,6 +107,32 @@ class TeamDynamixInstance:
         self._populate_ids(app_type, app_name)
         return
 
+    def load_auth_token(self, filename: str = "tdx.key") -> None:
+        """Loads an auth token instead of getting it through the web api
+
+        Args:
+            filename (str, optional): Filename to load the key from. Defaults to tdx.key.
+        """
+        try:
+            keyfile = open("tdx.key")
+            self.set_auth_token(keyfile.read())
+            keyfile.close()
+        except FileNotFoundError as e:
+            print(f"File {filename} not found")
+            raise e
+    
+    def save_auth_token(self, filename: str = "tdx.key") -> None:
+        """Saves the auth token to a file for later use
+
+        Args:
+            filename (str, optional): File to save the auth token to. Defaults to tdx.key.
+        """
+        if(filename == None):
+            filename = "tdx.key"
+        keyfile = open(filename, "w+")
+        keyfile.write(self._auth_token)
+        keyfile.close()
+
     ##################
     #                #
     #     Assets     #
@@ -125,9 +151,9 @@ class TeamDynamixInstance:
             notes (str): New notes if provided, keeps previous notes if none given
         """
         if(app_name == None):
-            app_name = self.default_asset_app_name
-        asset["LocationID"] = self.content["LocationIDs"][location_name]
-        asset["StatusID"] = self.content[app_name]["AssetStatusIDs"][status_name]
+            app_name = self._default_asset_app_name
+        asset["LocationID"] = self._content["LocationIDs"][location_name]
+        asset["StatusID"] = self._content[app_name]["AssetStatusIDs"][status_name]
         if(owner_uid is not None):
             asset["OwningCustomerID"] = self._no_owner
         else:
@@ -141,12 +167,12 @@ class TeamDynamixInstance:
                 attr["Value"] = date.today().strftime("%m/%d/%Y")
         if("Last Inventoried" not in existing_attributes):
             asset["Attributes"].append({
-                "ID": self.content["AssetAttributes"]["Last Inventoried"],
+                "ID": self._content["AssetAttributes"]["Last Inventoried"],
                 "Value": date.today().strftime("%m/%d/%Y")
             })
         if("Notes" not in existing_attributes):
             asset["Attributes"].append({
-                "ID": self.content["AssetAttributes"]["Notes"],
+                "ID": self._content["AssetAttributes"]["Notes"],
                 "Value": notes
             })
         self.update_asset(asset)
@@ -162,8 +188,8 @@ class TeamDynamixInstance:
             dict: Asset as dictonary, includes custom attributes
         """
         if(app_name == None):
-            app_name = self.default_asset_app_name
-        app_id = self.content["AppIDs"][app_name]
+            app_name = self._default_asset_app_name
+        app_id = self._content["AppIDs"][app_name]
         response = self._make_request("get", f"{app_id}/assets/{asset_id}")
         asset = json.loads(response.text)
         return asset
@@ -180,8 +206,8 @@ class TeamDynamixInstance:
         """
 
         if(app_name == None):
-            app_name = self.default_asset_app_name
-        app_id = self.content["AppIDs"][app_name]
+            app_name = self._default_asset_app_name
+        app_id = self._content["AppIDs"][app_name]
         body = {
             "SerialLike": search_string
         }
@@ -200,8 +226,8 @@ class TeamDynamixInstance:
             requests.Response: The response from the remote TDx instance, can be used for error handling but typically unconsumed
         """
         if(app_name == None):
-            app_name = self.default_asset_app_name
-        app_id = self.content["AppIDs"][app_name]
+            app_name = self._default_asset_app_name
+        app_id = self._content["AppIDs"][app_name]
         response = self._make_request("post", f"{app_id}/assets/{asset['ID']}", body=asset)
         if(response.status_code != 200):
             print(f"Unable to update asset: {response.text}")
@@ -225,8 +251,8 @@ class TeamDynamixInstance:
             requests.Response: Response from TDx, can be used for error handling
         """
         if(ticket_app_name == None):
-            ticket_app_name = self.default_ticket_app_name
-        app_id = self.content["AppIDs"][ticket_app_name]
+            ticket_app_name = self._default_ticket_app_name
+        app_id = self._content["AppIDs"][ticket_app_name]
         response = self._make_request("post", f"{app_id}/tickets/{ticket_id}/assets/{asset_id}")
         if(response.status_code != 200):
             print(f"Unable to attach asset {asset_id} to ticket {ticket_id}: {response.text}")
@@ -247,17 +273,17 @@ class TeamDynamixInstance:
         """
 
         if(app_name == None):
-            app_name = self.default_ticket_app_name
+            app_name = self._default_ticket_app_name
         status_ids = []
         for status_name in status_names:
-            status_ids.append(self.content[app_name]["TicketStatusIDs"][status_name])
-        app_id = self.content["AppIDs"][app_name]
+            status_ids.append(self._content[app_name]["TicketStatusIDs"][status_name])
+        app_id = self._content["AppIDs"][app_name]
         body = {
             "RequestorUids": [requester_uid],
             "StatusIDs": status_ids,
         }
         if(responsible_group_name != None):
-            body["ResponsiblityGroupIDs"] = [self.content["GroupIDs"][responsible_group_name]]
+            body["ResponsiblityGroupIDs"] = [self._content["GroupIDs"][responsible_group_name]]
         response = self._make_request("post", f"{app_id}/tickets/search", body=body)
         tickets = json.loads(response.text)
 
@@ -280,8 +306,8 @@ class TeamDynamixInstance:
         """
 
         if(app_name == None):
-            app_name = self.default_ticket_app_name
-        app_id = self.content["AppIDs"][app_name]
+            app_name = self._default_ticket_app_name
+        app_id = self._content["AppIDs"][app_name]
         response = self._make_request("get", f"{app_id}/tickets/{ticket_id}")
         ticket = json.loads(response.text)
         return ticket
@@ -313,9 +339,9 @@ class TeamDynamixInstance:
             requests.Response: Response from the TDx instance
         """
         if(app_name == None):
-            app_name = self.default_ticket_app_name
-        app_id = self.content["AppIDs"][app_name]
-        status_id = self.content[app_name]["TicketStatusIDs"][status_name]
+            app_name = self._default_ticket_app_name
+        app_id = self._content["AppIDs"][app_name]
+        status_id = self._content[app_name]["TicketStatusIDs"][status_name]
         body = {
             "NewStatusID": status_id,
             "Comments": comments,
@@ -368,9 +394,9 @@ class TeamDynamixInstance:
             print("Could not populate groups")
             return
         groups = json.loads(response.text)
-        self.content["GroupIDs"] = {}
+        self._content["GroupIDs"] = {}
         for group in groups:
-            self.content["GroupIDs"][group["Name"]] = group["ID"]
+            self._content["GroupIDs"][group["Name"]] = group["ID"]
         pass
     #####################
     #                   #
@@ -388,17 +414,17 @@ class TeamDynamixInstance:
         id = self._populating_dict[type]["ID"]
         name = self._populating_dict[type]["Name"]
         endpoint = self._populating_dict[type]["Endpoint"]
-        content = self.content
+        content = self._content
 
         if(app_name):
-            endpoint = str(self.content["AppIDs"][app_name]) + f"/{endpoint}"
+            endpoint = str(self._content["AppIDs"][app_name]) + f"/{endpoint}"
         response = self._make_request("get", endpoint)
         objs = json.loads(response.text)
 
         # If working with a specific app name, move into that app name's subdictionary
-        if(app_name and app_name not in self.content):
+        if(app_name and app_name not in self._content):
             content[app_name] = {}
-            content = self.content[app_name]
+            content = self._content[app_name]
 
         if(type not in content):
             content[type] = {}
@@ -422,15 +448,15 @@ class TeamDynamixInstance:
             "Content-Type": "application/json; charset=utf-8",
         }
 
-        if(self.auth_token and requires_auth):
-            headers["Authorization"] = f"Bearer {self.auth_token}"
+        if(self._auth_token and requires_auth):
+            headers["Authorization"] = f"Bearer {self._auth_token}"
 
-        if(self.sandbox):
+        if(self._sandbox):
             api_version = "SBTDWebApi"
         else:
             api_version = "TDWebApi"
 
-        url = f"https://{self.domain}/{api_version}/api/{endpoint}"
+        url = f"https://{self._domain}/{api_version}/api/{endpoint}"
 
         if(type == "get"):
             response = requests.get(url=url, headers=headers)
