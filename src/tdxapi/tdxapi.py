@@ -378,7 +378,6 @@ class TeamDynamixInstance:
             return
         people = json.loads(response.text)
         return people
-        
 
     #####################
     #                   #
@@ -398,6 +397,7 @@ class TeamDynamixInstance:
         for group in groups:
             self._content["GroupIDs"][group["Name"]] = group["ID"]
         pass
+   
     #####################
     #                   #
     #     Utilities     #
@@ -430,7 +430,6 @@ class TeamDynamixInstance:
             content[type] = {}
         for obj in objs:
             content[type][obj[name]] = obj[id]
-
 
     def _make_request(self, type: str, endpoint: str, requires_auth: bool = True, body: dict = {}) -> requests.Response:
         """Makes a request to the remote TDx instance
