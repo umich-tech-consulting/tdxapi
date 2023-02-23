@@ -1,6 +1,6 @@
 __all__ = [
     "tdxapi", 
-    "tdxapi_exceptions"
+    "exceptions"
 ]
 
 from .tdxapi import *
