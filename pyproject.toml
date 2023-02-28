@@ -1,6 +1,9 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm", "setuptools-git-versioning<2"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "tdxapi"
-version = "0.1.1"
 authors = [
     { name="Owain Kert", email="owaink@umich.edu" },
 ]
@@ -8,6 +11,13 @@ description = "Python wrapper for the TeamDynamix Web Api"
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = []
+dynamic = ["dependencies", "version"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 
 [project.urls]
 "Homepage" = "https://github.com/owaink/tdxapi"
+
+[tool.setuptools-git-versioning]
+enabled = true
