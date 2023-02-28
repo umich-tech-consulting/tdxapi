@@ -21,4 +21,7 @@ dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools-git-versioning]
 enabled = true
-starting_version = "0.1.2"
+version_file = "VERSION"
+count_commits_from_version_file = true
+dev_template = "{tag}"
+dirty_template = "{tag}.{ccount}"
