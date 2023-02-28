@@ -21,4 +21,4 @@ dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools-git-versioning]
 enabled = true
-starting-version = "0.1.2"
+starting_version = "0.1.2"
