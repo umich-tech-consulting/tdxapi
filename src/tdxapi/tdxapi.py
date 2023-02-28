@@ -479,7 +479,7 @@ class TeamDynamixInstance:
         else:
             api_version = "TDWebApi"
 
-        url = f"https://{self._domain}/{api_version}/api/"
+        url = f"https://{self._domain}"
         headers = {
             "Content-Type": "application/json; charset=utf-8",
         }
@@ -488,12 +488,12 @@ class TeamDynamixInstance:
             headers["Authorization"] = f"Bearer {self._auth_token}"
 
         if(self._api_session == None):
-            self._api_session = aiohttp.ClientSession(url, headers=headers)
+            self._api_session = aiohttp.ClientSession(f"{url}", headers=headers)
 
         if(type == "get"):
-            async with self._api_session.get(endpoint) as response_promise:
+            async with self._api_session.get(f"/{api_version}/api/{endpoint}") as response_promise:
                 return response_promise
         elif(type == "post"):
-            async with self._api_session.post(endpoint, data=body) as response_promise:
+            async with self._api_session.post(f"/{api_version}/api/{endpoint}", data=body) as response_promise:
                 return response_promise
     pass
