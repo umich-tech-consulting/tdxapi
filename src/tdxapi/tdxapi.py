@@ -1,4 +1,6 @@
 import requests
+import aiohttp
+import asyncio
 import json
 from datetime import date
 from tdxapi.exceptions import *
@@ -45,7 +47,7 @@ class TeamDynamixInstance:
         }
     }
     
-    def __init__(self, domain: str = None, auth_token: str = None, sandbox: bool = True, default_ticket_app_name: str = None, default_asset_app_name: str = None) -> None:
+    def __init__(self, domain: str = None, auth_token: str = None, sandbox: bool = True, default_ticket_app_name: str = None, default_asset_app_name: str = None, api_session: aiohttp.ClientSession = None) -> None:
         """Creates a new TDx object to interact with the remote instance
 
         Args:
@@ -61,6 +63,7 @@ class TeamDynamixInstance:
         self._content = {}
         self._default_ticket_app_name = default_ticket_app_name
         self._default_asset_app_name = default_asset_app_name
+        self._api_session = api_session
 
     def set_auth_token(self, token: str) -> None:
         """Sets the authentication token for accessing remote TDx Instance
@@ -75,7 +78,7 @@ class TeamDynamixInstance:
         """Returns the currently logged in user, useful for testing if TDx can be accessed
 
         Returns:
-            bool: Whether the TDx instance can be reached as an authenticated user
+            dict: The current user
         """
         response = self._make_request("get", "auth/getuser", True)
         if(response.status_code == 200):
@@ -86,8 +89,11 @@ class TeamDynamixInstance:
         else:
             print(f"Something went wrong checking authentication: {response.text}")
             return False
-
+    
     def initialize(self) -> None:
+        asyncio.run(self._populate_all_ids())
+
+    async def _populate_all_ids(self) -> None:
         """Populates the TDx object with useful name to ID conversions
         """
         self._populate_ids("AppIDs")
@@ -97,6 +103,7 @@ class TeamDynamixInstance:
         self._populate_group_ids()
         return
 
+
     def populate_ids_for_app(self, app_type: str, app_name: str) -> None:
         """Populates the TDx object with IDs for a specific app, like tickets or people
 
@@ -104,7 +111,7 @@ class TeamDynamixInstance:
             app_type (str): The type of the app, eg "AssetStatusIDs"
             app_name (str): The name of the app in TDx to populate, eg "ITS Tickets"
         """
-        self._populate_ids(app_type, app_name)
+        asyncio.run(self._populate_ids(app_type, app_name))
         return
 
     def load_auth_token(self, filename: str = "tdx.key") -> None:
@@ -404,7 +411,7 @@ class TeamDynamixInstance:
     #                   #
     #####################
 
-    def _populate_ids(self, type: str, app_name: str = None) -> None:
+    async def _populate_ids(self, type: str, app_name: str = None) -> None:
         """Populates name to id dictonary for given app
 
         Args:
@@ -418,8 +425,9 @@ class TeamDynamixInstance:
 
         if(app_name):
             endpoint = str(self._content["AppIDs"][app_name]) + f"/{endpoint}"
-        response = self._make_request("get", endpoint)
-        objs = json.loads(response.text)
+        response = await self._make_async_request("get", endpoint)
+
+        objs = response.json()
 
         # If working with a specific app name, move into that app name's subdictionary
         if(app_name and app_name not in self._content):
@@ -463,3 +471,29 @@ class TeamDynamixInstance:
             response = requests.post(url=url, headers=headers, json=body)
 
         return response
+
+    async def _make_async_request(self, type: str, endpoint: str, requires_auth: bool = True, body: dict = {}) -> aiohttp.ClientResponse:
+        
+        if(self._sandbox):
+            api_version = "SBTDWebApi"
+        else:
+            api_version = "TDWebApi"
+
+        url = f"https://{self._domain}/{api_version}/api"
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+        }
+
+        if(self._auth_token and requires_auth):
+            headers["Authorization"] = f"Bearer {self._auth_token}"
+
+        if(self._api_session == None):
+            self._api_session = aiohttp.ClientSession(url, headers=headers)
+
+        if(type == "get"):
+            async with self._api_session.get(endpoint) as response_promise:
+                return response_promise
+        elif(type == "post"):
+            async with self._api_session.post(endpoint, data=body) as response_promise:
+                return response_promise
+    pass
