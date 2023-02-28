@@ -425,9 +425,7 @@ class TeamDynamixInstance:
 
         if(app_name):
             endpoint = str(self._content["AppIDs"][app_name]) + f"/{endpoint}"
-        response_promise = self._make_async_request("get", endpoint)
-
-        objs = (await response_promise).json()
+        response = self._make_async_request("get", endpoint)
 
         # If working with a specific app name, move into that app name's subdictionary
         if(app_name and app_name not in self._content):
@@ -436,7 +434,7 @@ class TeamDynamixInstance:
 
         if(type not in content):
             content[type] = {}
-        for obj in objs:
+        for obj in response:
             content[type][obj[name]] = obj[id]
 
     def _make_request(self, type: str, endpoint: str, requires_auth: bool = True, body: dict = {}) -> requests.Response:
@@ -472,7 +470,7 @@ class TeamDynamixInstance:
 
         return response
 
-    async def _make_async_request(self, type: str, endpoint: str, requires_auth: bool = True, body: dict = {}) -> aiohttp.ClientResponse:
+    async def _make_async_request(self, type: str, endpoint: str, requires_auth: bool = True, body: dict = {}) -> dict:
         
         if(self._sandbox):
             api_version = "SBTDWebApi"
@@ -491,9 +489,9 @@ class TeamDynamixInstance:
             self._api_session = aiohttp.ClientSession(f"{url}", headers=headers)
 
         if(type == "get"):
-            async with self._api_session.get(f"/{api_version}/api/{endpoint}") as response_promise:
-                return await response_promise
+            async with self._api_session.get(f"/{api_version}/api/{endpoint}") as response:
+                return await response.json()
         elif(type == "post"):
-            async with self._api_session.post(f"/{api_version}/api/{endpoint}", data=body) as response_promise:
-                return await response_promise
+            async with self._api_session.post(f"/{api_version}/api/{endpoint}", data=body) as response:
+                return await response.json()
     pass
