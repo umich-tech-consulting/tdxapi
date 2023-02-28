@@ -97,10 +97,10 @@ class TeamDynamixInstance:
     async def _populate_all_ids(self) -> None:
         """Populates the TDx object with useful name to ID conversions
         """
-        self._populate_ids("AppIDs")
-        self._populate_ids("LocationIDs")
-        self._populate_ids("AssetAttributes")
-        self._populate_ids("TicketAttributes")
+        await self._populate_ids("AppIDs")
+        await self._populate_ids("LocationIDs")
+        await self._populate_ids("AssetAttributes")
+        await self._populate_ids("TicketAttributes")
         return
 
 
