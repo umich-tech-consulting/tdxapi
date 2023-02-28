@@ -427,7 +427,7 @@ class TeamDynamixInstance:
             endpoint = str(self._content["AppIDs"][app_name]) + f"/{endpoint}"
         response_promise = self._make_async_request("get", endpoint)
 
-        objs = await response_promise.json()
+        objs = (await response_promise).json()
 
         # If working with a specific app name, move into that app name's subdictionary
         if(app_name and app_name not in self._content):
