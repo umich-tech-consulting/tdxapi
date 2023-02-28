@@ -492,8 +492,8 @@ class TeamDynamixInstance:
 
         if(type == "get"):
             async with self._api_session.get(f"/{api_version}/api/{endpoint}") as response_promise:
-                return response_promise
+                return await response_promise
         elif(type == "post"):
             async with self._api_session.post(f"/{api_version}/api/{endpoint}", data=body) as response_promise:
-                return response_promise
+                return await response_promise
     pass
