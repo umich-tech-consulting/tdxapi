@@ -92,6 +92,7 @@ class TeamDynamixInstance:
     
     def initialize(self) -> None:
         asyncio.run(self._populate_all_ids())
+        self._populate_group_ids()
 
     async def _populate_all_ids(self) -> None:
         """Populates the TDx object with useful name to ID conversions
@@ -100,7 +101,6 @@ class TeamDynamixInstance:
         self._populate_ids("LocationIDs")
         self._populate_ids("AssetAttributes")
         self._populate_ids("TicketAttributes")
-        self._populate_group_ids()
         return
 
 
@@ -479,7 +479,7 @@ class TeamDynamixInstance:
         else:
             api_version = "TDWebApi"
 
-        url = f"https://{self._domain}/{api_version}/api"
+        url = f"https://{self._domain}/{api_version}/api/"
         headers = {
             "Content-Type": "application/json; charset=utf-8",
         }
