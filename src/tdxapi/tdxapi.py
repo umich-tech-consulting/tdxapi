@@ -91,7 +91,8 @@ class TeamDynamixInstance:
             return False
     
     def initialize(self) -> None:
-        asyncio.run(self._populate_all_ids())
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self._populate_all_ids())
         self._populate_group_ids()
 
     async def _populate_all_ids(self) -> None:
@@ -111,17 +112,9 @@ class TeamDynamixInstance:
             app_type (str): The type of the app, eg "AssetStatusIDs"
             app_name (str): The name of the app in TDx to populate, eg "ITS Tickets"
         """
-        asyncio.run(self._populate_ids(app_type, app_name))
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self._populate_ids(app_type, app_name))
         return
-
-    async def _populate_ids_for_app(self, app_type: str, app_name: str) -> None:
-        """Populates the TDx object with IDs for a specific app, like tickets or people
-
-        Args:
-            app_type (str): The type of the app, eg "AssetStatusIDs"
-            app_name (str): The name of the app in TDx to populate, eg "ITS Tickets"
-        """
-        await self._populate_ids(app_type, app_name)
 
     def load_auth_token(self, filename: str = "tdx.key") -> None:
         """Loads an auth token instead of getting it through the web api
