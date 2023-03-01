@@ -12,3 +12,12 @@ class RequestFailedException(Exception):
 
 class NoDefaultAppException(Exception):
     """No app was provided and no default is set"""
+
+class InvalidHTTPMethodException(Exception):
+    """Not a supported HTTP Method"""
+
+class NoSuchAttribute(Exception):
+    """The attribute could not be found in the object"""
+
+class NoSuchPerson(Exception):
+    """The person could not be found"""

@@ -2,6 +2,7 @@ import requests
 import aiohttp
 import asyncio
 import json
+from typing import Optional
 from datetime import date
 from tdxapi.exceptions import *
 
@@ -47,7 +48,7 @@ class TeamDynamixInstance:
         }
     }
     
-    def __init__(self, domain: str = None, auth_token: str = None, sandbox: bool = True, default_ticket_app_name: str = None, default_asset_app_name: str = None, api_session: aiohttp.ClientSession = None) -> None:
+    def __init__(self, domain: Optional[str] = None, auth_token: Optional[str] = None, sandbox: bool = True, default_ticket_app_name: Optional[str] = None, default_asset_app_name: Optional[str] = None, api_session: Optional[aiohttp.ClientSession] = None) -> None:
         """Creates a new TDx object to interact with the remote instance
 
         Args:
@@ -88,7 +89,7 @@ class TeamDynamixInstance:
             raise NotAuthorizedException
         else:
             print(f"Something went wrong checking authentication: {response.text}")
-            return False
+            raise NotAuthorizedException
     
     def initialize(self) -> None:
         loop = asyncio.get_event_loop()
@@ -139,7 +140,7 @@ class TeamDynamixInstance:
         if(filename == None):
             filename = "tdx.key"
         keyfile = open(filename, "w+")
-        keyfile.write(self._auth_token)
+        keyfile.write(str(self._auth_token))
         keyfile.close()
 
     ##################
@@ -148,7 +149,7 @@ class TeamDynamixInstance:
     #                #
     ##################
 
-    def inventory_asset(self, asset: dict,  location_name: str, status_name: str, owner_uid: str = None, notes: str = None, app_name: str = None) -> None:
+    def inventory_asset(self, asset: dict,  location_name: str, status_name: str, owner_uid: Optional[str] = None, notes: Optional[str] = None, app_name: Optional[str] = None) -> None:
         """Updates the inventory status of an asset by updating location, status, owner, and notes
 
         Args:
@@ -186,7 +187,7 @@ class TeamDynamixInstance:
             })
         self.update_asset(asset)
 
-    def get_asset(self, asset_id: str, app_name: str = None) -> dict:
+    def get_asset(self, asset_id: str, app_name: Optional[str] = None) -> dict:
         """Fetchs an asset and returns it in dictonary form
 
         Args:
@@ -203,7 +204,7 @@ class TeamDynamixInstance:
         asset = json.loads(response.text)
         return asset
 
-    def search_assets(self, search_string: str, app_name: str = None) -> list:
+    def search_assets(self, search_string: str, app_name: Optional[str] = None) -> list:
         """Searches for assets in the given app using the given search string and gives a list of matching assets as dictionaries
 
         Args:
@@ -224,7 +225,7 @@ class TeamDynamixInstance:
         assets = json.loads(response.text)
         return assets
 
-    def update_asset(self, asset: dict, app_name: str = None) -> requests.Response:
+    def update_asset(self, asset: dict, app_name: Optional[str] = None) -> requests.Response:
         """Updates an asset in TDx
 
         Args:
@@ -248,7 +249,7 @@ class TeamDynamixInstance:
     #                 #
     ###################
 
-    def attach_asset_to_ticket(self, ticket_id: str, asset_id: str, ticket_app_name: str = None) -> requests.Response:
+    def attach_asset_to_ticket(self, ticket_id: str, asset_id: str, ticket_app_name: Optional[str] = None) -> requests.Response:
         """Attaches an asset to a ticket in a given ticket application
 
         Args:
@@ -267,7 +268,7 @@ class TeamDynamixInstance:
             print(f"Unable to attach asset {asset_id} to ticket {ticket_id}: {response.text}")
         return response
 
-    def search_tickets(self, requester_uid: str, status_names: list, title: str, responsible_group_name: str = None, app_name: str = None) -> list:
+    def search_tickets(self, requester_uid: str, status_names: list, title: str, responsible_group_name: Optional[str] = None, app_name: Optional[str] = None) -> list:
         """Searches a ticket application for a ticket matching the given search criteria
 
         Args:
@@ -303,7 +304,7 @@ class TeamDynamixInstance:
                 filtered_tickets.append(ticket)
         return filtered_tickets
 
-    def get_ticket(self, ticket_id: str, app_name: str = None) -> dict:
+    def get_ticket(self, ticket_id: str, app_name: Optional[str] = None) -> dict:
         """Gets a full ticket based on ID, includes custom attributes
 
         Args:
@@ -334,8 +335,9 @@ class TeamDynamixInstance:
         for attr in ticket["Attributes"]:
             if(attr["Name"] == attr_name):
                 return attr
+        raise NoSuchAttribute
 
-    def update_ticket_status(self, ticket_id: str, status_name: str, comments: str, app_name: str = None) -> requests.Response:
+    def update_ticket_status(self, ticket_id: str, status_name: str, comments: str, app_name: Optional[str] = None) -> requests.Response:
         """Updates a ticket to the given status with given comments
 
         Args:
@@ -384,7 +386,7 @@ class TeamDynamixInstance:
 
         if(response.status_code != 200):
             print(f"Unable to search user: {response.text}")
-            return
+            raise RequestFailedException
         people = json.loads(response.text)
         return people
 
@@ -413,7 +415,7 @@ class TeamDynamixInstance:
     #                   #
     #####################
 
-    async def _populate_ids(self, type: str, app_name: str = None) -> None:
+    async def _populate_ids(self, type: str, app_name: Optional[str] = None) -> None:
         """Populates name to id dictonary for given app
 
         Args:
@@ -469,6 +471,9 @@ class TeamDynamixInstance:
             response = requests.get(url=url, headers=headers)
         elif(type == "post"):
             response = requests.post(url=url, headers=headers, json=body)
+        else:
+            print(f"Expected post or get, got {type}")
+            raise InvalidHTTPMethodException
 
         return response
 
@@ -496,4 +501,8 @@ class TeamDynamixInstance:
         elif(type == "post"):
             async with self._api_session.post(f"/{api_version}/api/{endpoint}", data=body) as response:
                 return await response.json()
+        else:
+            print(f"Expected post or get, got {type}")
+            raise InvalidHTTPMethodException
+
     pass
