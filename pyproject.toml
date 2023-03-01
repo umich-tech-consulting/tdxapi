@@ -25,3 +25,6 @@ version_file = "VERSION"
 count_commits_from_version_file = true
 dev_template = "{tag}.{ccount}+{sha}"
 dirty_template = "{tag}.{ccount}+{sha}"
+
+[tool.black]
+line-length = 79

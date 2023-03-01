@@ -1,62 +1,109 @@
-import requests
-import aiohttp
+"""_summary_
+
+Raises:
+    tdxapi.exceptions.NotAuthorizedException: _description_
+    tdxapi.exceptions.NotAuthorizedException: _description_
+    tdxapi.exceptions.PropertyNotSetException: _description_
+    exception: _description_
+    tdxapi.exceptions.NoSuchAttributeException: _description_
+    tdxapi.exceptions.RequestFailedException: _description_
+    tdxapi.exceptions.InvalidHTTPMethodException: _description_
+    tdxapi.exceptions.InvalidHTTPMethodException: _description_
+
+Returns:
+    _type_: _description_
+"""
 import asyncio
-import json
-from typing import Optional
 from datetime import date
-from tdxapi.exceptions import *
+from typing import Optional
+
+import aiohttp
+import requests
+
+import tdxapi.exceptions
+
 
 class TeamDynamixInstance:
-    _no_owner = '00000000-0000-0000-0000-000000000000'
+    """
+    A representation of the remote Team Dynamix (TDx) instance, stores
+    information for communicating with the remote instance and wraps the API
+    for easier consumption
+
+    Raises:
+        tdxapi.exceptions.NotAuthorizedException: _description_
+        tdxapi.exceptions.NotAuthorizedException: _description_
+        tdxapi.exceptions.PropertyNotSetException: _description_
+        exception: _description_
+        tdxapi.exceptions.NoSuchAttributeException: _description_
+        tdxapi.exceptions.RequestFailedException: _description_
+        tdxapi.exceptions.InvalidHTTPMethodException: _description_
+        tdxapi.exceptions.InvalidHTTPMethodException: _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+    _no_owner = "00000000-0000-0000-0000-000000000000"
     # These are hardcoded into the API
-    _component_ids = {
-        "Ticket": 9,
-        "Asset": 27
-    }
+    _component_ids = {"Ticket": 9, "Asset": 27}
     # This is used to construct a name -> id dictionary so descriptive names can
     # be used instead of vauge IDs
     _populating_dict = {
-        "AppIDs": {
-            "Name": "Name",
-            "ID": "AppID",
-            "Endpoint": "applications"
-        },
-        "LocationIDs": {
-            "Name": "Name",
-            "ID": "ID",
-            "Endpoint": "locations"
-        },
+        "AppIDs": {"Name": "Name", "ID": "AppID", "Endpoint": "applications"},
+        "LocationIDs": {"Name": "Name", "ID": "ID", "Endpoint": "locations"},
         "AssetStatusIDs": {
             "Name": "Name",
             "ID": "ID",
-            "Endpoint": "assets/statuses"
+            "Endpoint": "assets/statuses",
         },
         "TicketStatusIDs": {
             "Name": "Name",
             "ID": "ID",
-            "Endpoint": "tickets/statuses"
+            "Endpoint": "tickets/statuses",
         },
         "AssetAttributes": {
             "Name": "Name",
             "ID": "ID",
-            "Endpoint": f"attributes/custom?componentId={_component_ids['Asset']}"
+            "Endpoint": f"attributes/custom?componentId={_component_ids['Asset']}",
         },
         "TicketAttributes": {
             "Name": "Name",
             "ID": "ID",
-            "Endpoint": f"attributes/custom?componentId={_component_ids['Ticket']}"
-        }
+            "Endpoint": f"attributes/custom?componentId={_component_ids['Ticket']}",
+        },
     }
-    
-    def __init__(self, domain: Optional[str] = None, auth_token: Optional[str] = None, sandbox: bool = True, default_ticket_app_name: Optional[str] = None, default_asset_app_name: Optional[str] = None, api_session: Optional[aiohttp.ClientSession] = None) -> None:
+
+    def __init__(
+        self,
+        domain: Optional[str] = None,
+        auth_token: Optional[str] = None,
+        sandbox: bool = True,
+        default_ticket_app_name: Optional[str] = None,
+        default_asset_app_name: Optional[str] = None,
+        api_session: Optional[aiohttp.ClientSession] = None,
+    ) -> None:
         """Creates a new TDx object to interact with the remote instance
 
         Args:
-            domain (str, optional): Domain of the remote instance (eg teamdynamix.umich.edu). Defaults to None.
-            auth_token (str, optional): Auth token provided from remote instance. Defaults to None.
-            sandbox (bool, optional): Whether to use the safe sandbox environment or not. Set to False to use production environment. Defaults to True.
-            default_ticket_app_name (str, optional): Ticket app to use when none is defined. Defaults to None.
-            default_asset_app_name (str, optional): Asset app to use when none is defined. Default to None.
+            domain (str, optional): 
+            Domain of the remote instance (eg teamdynamix.umich.edu).
+            Defaults to None.
+
+            auth_token (str, optional):
+            Auth token provided from remote instance.
+            Defaults to None.
+
+            sandbox (bool, optional):
+            Whether to use the safe sandbox environment or not.
+            Set to False to use production environment. Defaults to True.
+
+            default_ticket_app_name (str, optional):
+            Ticket app to use when none is defined.
+            Defaults to None.
+
+            default_asset_app_name (str, optional):
+            Asset app to use when none is defined.
+            Default to None.
         """
         self._domain = domain
         self._auth_token = auth_token
@@ -68,7 +115,8 @@ class TeamDynamixInstance:
 
     def set_auth_token(self, token: str) -> None:
         """Sets the authentication token for accessing remote TDx Instance
-        Tokens can be retrieved using any method here: https://teamdynamix.umich.edu/TDWebApi/Home/section/Auth
+        Tokens can be retrieved using any method here: 
+        https://teamdynamix.umich.edu/TDWebApi/Home/section/Auth
 
         Args:
             token (str): Token in JWT for authenticating to TDx
@@ -82,14 +130,16 @@ class TeamDynamixInstance:
             dict: The current user
         """
         response = self._make_request("get", "auth/getuser", True)
-        if(response.status_code == 200):
-            user = json.loads(response.text)
+        if response.status_code == 200:
+            user = response.json()
             return user
-        elif(response.status_code == 401):
-            raise NotAuthorizedException
+        elif response.status_code == 401:
+            raise tdxapi.exceptions.NotAuthorizedException
         else:
-            print(f"Something went wrong checking authentication: {response.text}")
-            raise NotAuthorizedException
+            print(
+                f"Something went wrong checking authentication: {response.text}"
+            )
+            raise tdxapi.exceptions.NotAuthorizedException
 
     def get_domain(self) -> str:
         """Returns the domain of the TDx as a string
@@ -100,13 +150,17 @@ class TeamDynamixInstance:
         Returns:
             str: The domain of the TDx instance as a string
         """
-        if(type(self._domain) == str):
+        if isinstance(self._domain, str):
             return str(self._domain)
         else:
-            raise PropertyNotSetException
+            raise tdxapi.exceptions.PropertyNotSetException
 
     def set_domain(self, domain: str) -> None:
-        """"""
+        """Sets the domain of the remote TDx instance
+
+        Args:
+            domain (str): Domain of remote instance
+        """
         self._domain = domain
 
     def initialize(self) -> None:
@@ -116,8 +170,7 @@ class TeamDynamixInstance:
         self._populate_group_ids()
 
     async def _populate_all_ids(self) -> None:
-        """Populates the TDx object with useful name to ID conversions
-        """
+        """Populates the TDx object with useful name to ID conversions"""
         await self._populate_ids("AppIDs")
         await self._populate_ids("LocationIDs")
         await self._populate_ids("AssetAttributes")
@@ -142,22 +195,22 @@ class TeamDynamixInstance:
             filename (str, optional): Filename to load the key from. Defaults to tdx.key.
         """
         try:
-            keyfile = open("tdx.key")
+            keyfile = open("tdx.key", encoding="UTF-8")
             self.set_auth_token(keyfile.read())
             keyfile.close()
-        except FileNotFoundError as e:
+        except FileNotFoundError as exception:
             print(f"File {filename} not found")
-            raise e
-    
+            raise exception
+
     def save_auth_token(self, filename: str = "tdx.key") -> None:
         """Saves the auth token to a file for later use
 
         Args:
             filename (str, optional): File to save the auth token to. Defaults to tdx.key.
         """
-        if(filename == None):
+        if filename is None:
             filename = "tdx.key"
-        keyfile = open(filename, "w+")
+        keyfile = open(filename, "w+", encoding="UTF-8")
         keyfile.write(str(self._auth_token))
         keyfile.close()
 
@@ -167,7 +220,15 @@ class TeamDynamixInstance:
     #                #
     ##################
 
-    def inventory_asset(self, asset: dict,  location_name: str, status_name: str, owner_uid: Optional[str] = None, notes: Optional[str] = None, app_name: Optional[str] = None) -> None:
+    def inventory_asset(
+        self,
+        asset: dict,
+        location_name: str,
+        status_name: str,
+        owner_uid: Optional[str] = None,
+        notes: Optional[str] = None,
+        app_name: Optional[str] = None,
+    ) -> None:
         """Updates the inventory status of an asset by updating location, status, owner, and notes
 
         Args:
@@ -178,31 +239,37 @@ class TeamDynamixInstance:
             owner_uid (str): New owner of the asset, removes owner if not given
             notes (str): New notes if provided, keeps previous notes if none given
         """
-        if(app_name == None):
+        if app_name is None:
             app_name = self._default_asset_app_name
         asset["LocationID"] = self._content["LocationIDs"][location_name]
-        asset["StatusID"] = self._content[app_name]["AssetStatusIDs"][status_name]
-        if(owner_uid is not None):
+        asset["StatusID"] = self._content[app_name]["AssetStatusIDs"][
+            status_name
+        ]
+        if owner_uid is not None:
             asset["OwningCustomerID"] = self._no_owner
         else:
             asset["OwningCustomerID"] = owner_uid
         existing_attributes = []
         for attr in asset["Attributes"]:
             existing_attributes.append(attr["Name"])
-            if(attr["Name"] == "Notes"):
+            if attr["Name"] == "Notes":
                 attr["Value"] = notes
-            if(attr["Name"] == "Last Inventoried"):
+            if attr["Name"] == "Last Inventoried":
                 attr["Value"] = date.today().strftime("%m/%d/%Y")
-        if("Last Inventoried" not in existing_attributes):
-            asset["Attributes"].append({
-                "ID": self._content["AssetAttributes"]["Last Inventoried"],
-                "Value": date.today().strftime("%m/%d/%Y")
-            })
-        if("Notes" not in existing_attributes):
-            asset["Attributes"].append({
-                "ID": self._content["AssetAttributes"]["Notes"],
-                "Value": notes
-            })
+        if "Last Inventoried" not in existing_attributes:
+            asset["Attributes"].append(
+                {
+                    "ID": self._content["AssetAttributes"]["Last Inventoried"],
+                    "Value": date.today().strftime("%m/%d/%Y"),
+                }
+            )
+        if "Notes" not in existing_attributes:
+            asset["Attributes"].append(
+                {
+                    "ID": self._content["AssetAttributes"]["Notes"],
+                    "Value": notes,
+                }
+            )
         self.update_asset(asset)
 
     def get_asset(self, asset_id: str, app_name: Optional[str] = None) -> dict:
@@ -215,15 +282,19 @@ class TeamDynamixInstance:
         Returns:
             dict: Asset as dictonary, includes custom attributes
         """
-        if(app_name == None):
+        if app_name is None:
             app_name = self._default_asset_app_name
         app_id = self._content["AppIDs"][app_name]
         response = self._make_request("get", f"{app_id}/assets/{asset_id}")
-        asset = json.loads(response.text)
+        asset = response.json()
         return asset
 
-    def search_assets(self, search_string: str, app_name: Optional[str] = None) -> list:
-        """Searches for assets in the given app using the given search string and gives a list of matching assets as dictionaries
+    def search_assets(
+        self, search_string: str, app_name: Optional[str] = None
+    ) -> list:
+        """
+        Searches for assets in the given app using the given search string
+        and gives a list of matching assets as dictionaries
 
         Args:
             app_name (str): App to search in
@@ -233,17 +304,19 @@ class TeamDynamixInstance:
             list: A list of dictionaries representing assets, does not include custom attributes
         """
 
-        if(app_name == None):
+        if app_name is None:
             app_name = self._default_asset_app_name
         app_id = self._content["AppIDs"][app_name]
-        body = {
-            "SerialLike": search_string
-        }
-        response = self._make_request("post", f"{app_id}/assets/search", body=body)
-        assets = json.loads(response.text)
+        body = {"SerialLike": search_string}
+        response = self._make_request(
+            "post", f"{app_id}/assets/search", body=body
+        )
+        assets = response.json()
         return assets
 
-    def update_asset(self, asset: dict, app_name: Optional[str] = None) -> requests.Response:
+    def update_asset(
+        self, asset: dict, app_name: Optional[str] = None
+    ) -> requests.Response:
         """Updates an asset in TDx
 
         Args:
@@ -251,13 +324,17 @@ class TeamDynamixInstance:
             asset (dict): Asset with updated values to be synced with TDx
 
         Returns:
-            requests.Response: The response from the remote TDx instance, can be used for error handling but typically unconsumed
+            requests.Response: 
+            The response from the remote TDx instance, 
+            can be used for error handling but typically unconsumed
         """
-        if(app_name == None):
+        if app_name is None:
             app_name = self._default_asset_app_name
         app_id = self._content["AppIDs"][app_name]
-        response = self._make_request("post", f"{app_id}/assets/{asset['ID']}", body=asset)
-        if(response.status_code != 200):
+        response = self._make_request(
+            "post", f"{app_id}/assets/{asset['ID']}", body=asset
+        )
+        if response.status_code != 200:
             print(f"Unable to update asset: {response.text}")
         return response
 
@@ -267,7 +344,12 @@ class TeamDynamixInstance:
     #                 #
     ###################
 
-    def attach_asset_to_ticket(self, ticket_id: str, asset_id: str, ticket_app_name: Optional[str] = None) -> requests.Response:
+    def attach_asset_to_ticket(
+        self,
+        ticket_id: str,
+        asset_id: str,
+        ticket_app_name: Optional[str] = None,
+    ) -> requests.Response:
         """Attaches an asset to a ticket in a given ticket application
 
         Args:
@@ -278,15 +360,26 @@ class TeamDynamixInstance:
         Returns:
             requests.Response: Response from TDx, can be used for error handling
         """
-        if(ticket_app_name == None):
+        if ticket_app_name is None:
             ticket_app_name = self._default_ticket_app_name
         app_id = self._content["AppIDs"][ticket_app_name]
-        response = self._make_request("post", f"{app_id}/tickets/{ticket_id}/assets/{asset_id}")
-        if(response.status_code != 200):
-            print(f"Unable to attach asset {asset_id} to ticket {ticket_id}: {response.text}")
+        response = self._make_request(
+            "post", f"{app_id}/tickets/{ticket_id}/assets/{asset_id}"
+        )
+        if response.status_code != 200:
+            print(
+                f"Unable to attach asset {asset_id} to ticket {ticket_id}: {response.text}"
+            )
         return response
 
-    def search_tickets(self, requester_uid: str, status_names: list, title: str, responsible_group_name: Optional[str] = None, app_name: Optional[str] = None) -> list:
+    def search_tickets(
+        self,
+        requester_uid: str,
+        status_names: list,
+        title: str,
+        responsible_group_name: Optional[str] = None,
+        app_name: Optional[str] = None,
+    ) -> list:
         """Searches a ticket application for a ticket matching the given search criteria
 
         Args:
@@ -294,35 +387,45 @@ class TeamDynamixInstance:
             requester_uid (str): UID of the requester for the ticket
             status_names (list): List of names of statuses that ticket can be
             title (str): Title of the ticket
-            responsible_group_name (str, optional): Name of the group ticket is assigned to. Defaults to None.
+            responsible_group_name (str, optional):
+            Name of the group ticket is assigned to. Defaults to None.
 
         Returns:
             list: A list of dictonaries representing tickets
         """
 
-        if(app_name == None):
+        if app_name is None:
             app_name = self._default_ticket_app_name
         status_ids = []
         for status_name in status_names:
-            status_ids.append(self._content[app_name]["TicketStatusIDs"][status_name])
+            status_ids.append(
+                self._content[app_name]["TicketStatusIDs"][status_name]
+            )
         app_id = self._content["AppIDs"][app_name]
         body = {
             "RequestorUids": [requester_uid],
             "StatusIDs": status_ids,
         }
-        if(responsible_group_name != None):
-            body["ResponsiblityGroupIDs"] = [self._content["GroupIDs"][responsible_group_name]]
-        response = self._make_request("post", f"{app_id}/tickets/search", body=body)
-        tickets = json.loads(response.text)
+        if responsible_group_name is not None:
+            body["ResponsiblityGroupIDs"] = [
+                self._content["GroupIDs"][responsible_group_name]
+            ]
+        response = self._make_request(
+            "post", f"{app_id}/tickets/search", body=body
+        )
+        tickets = response.json()
 
-        # TDx search doesn't let us search by title, so we filter the list for tickets with matching title
+        # TDx search doesn't let us search by title,
+        # so we filter the list for tickets with matching title
         filtered_tickets = []
         for ticket in tickets:
-            if(ticket["Title"] == title):
+            if ticket["Title"] == title:
                 filtered_tickets.append(ticket)
         return filtered_tickets
 
-    def get_ticket(self, ticket_id: str, app_name: Optional[str] = None) -> dict:
+    def get_ticket(
+        self, ticket_id: str, app_name: Optional[str] = None
+    ) -> dict:
         """Gets a full ticket based on ID, includes custom attributes
 
         Args:
@@ -333,15 +436,17 @@ class TeamDynamixInstance:
             dict: Dictonary representing the ticket
         """
 
-        if(app_name == None):
+        if app_name is None:
             app_name = self._default_ticket_app_name
         app_id = self._content["AppIDs"][app_name]
         response = self._make_request("get", f"{app_id}/tickets/{ticket_id}")
-        ticket = json.loads(response.text)
+        ticket = response.json()
         return ticket
-        
+
     def get_ticket_attribute(self, ticket: dict, attr_name: str) -> dict:
-        """Gets a specific attribute from a ticket, since attributes are returned from the API in an unordered list
+        """
+        Gets a specific attribute from a ticket,
+        since attributes are returned from the API in an unordered list
 
         Args:
             ticket (dict): Ticket to pull attribute from
@@ -351,11 +456,17 @@ class TeamDynamixInstance:
             dict: Dictonary of the attribute
         """
         for attr in ticket["Attributes"]:
-            if(attr["Name"] == attr_name):
+            if attr["Name"] == attr_name:
                 return attr
-        raise NoSuchAttributeException
+        raise tdxapi.exceptions.NoSuchAttributeException
 
-    def update_ticket_status(self, ticket_id: str, status_name: str, comments: str, app_name: Optional[str] = None) -> requests.Response:
+    def update_ticket_status(
+        self,
+        ticket_id: str,
+        status_name: str,
+        comments: str,
+        app_name: Optional[str] = None,
+    ) -> requests.Response:
         """Updates a ticket to the given status with given comments
 
         Args:
@@ -367,7 +478,7 @@ class TeamDynamixInstance:
         Returns:
             requests.Response: Response from the TDx instance
         """
-        if(app_name == None):
+        if app_name is None:
             app_name = self._default_ticket_app_name
         app_id = self._content["AppIDs"][app_name]
         status_id = self._content[app_name]["TicketStatusIDs"][status_name]
@@ -375,10 +486,12 @@ class TeamDynamixInstance:
             "NewStatusID": status_id,
             "Comments": comments,
             "IsPrivate": True,
-            "IsRichHTML": False
+            "IsRichHTML": False,
         }
-        response = self._make_request("post", f"{app_id}/tickets/{ticket_id}/feed", body=body)
-        if(response.status_code != 200):
+        response = self._make_request(
+            "post", f"{app_id}/tickets/{ticket_id}/feed", body=body
+        )
+        if response.status_code != 200:
             print(f"Unable to update ticket status: {response.text}")
         return response
 
@@ -397,15 +510,13 @@ class TeamDynamixInstance:
         Returns:
             dict: Dictonary representing the person if found
         """
-        body = {
-            "AlternateID": alt_id
-        }
-        response = self._make_request("post", f"people/search", body=body)
+        body = {"AlternateID": alt_id}
+        response = self._make_request("post", "people/search", body=body)
 
-        if(response.status_code != 200):
+        if response.status_code != 200:
             print(f"Unable to search user: {response.text}")
-            raise RequestFailedException
-        people = json.loads(response.text)
+            raise tdxapi.exceptions.RequestFailedException
+        people = response.json()
         return people
 
     #####################
@@ -415,51 +526,58 @@ class TeamDynamixInstance:
     #####################
 
     def _populate_group_ids(self) -> None:
-        """Populates the group name to ID dictonary for the TDx instance
-        """
+        """Populates the group name to ID dictonary for the TDx instance"""
         response = self._make_request("post", "groups/search")
-        if(response.status_code != 200):
+        if response.status_code != 200:
             print("Could not populate groups")
             return
-        groups = json.loads(response.text)
+        groups = response.json()
         self._content["GroupIDs"] = {}
         for group in groups:
             self._content["GroupIDs"][group["Name"]] = group["ID"]
-        pass
-   
+
     #####################
     #                   #
     #     Utilities     #
     #                   #
     #####################
 
-    async def _populate_ids(self, type: str, app_name: Optional[str] = None) -> None:
+    async def _populate_ids(
+        self, id_type: str, app_name: Optional[str] = None
+    ) -> None:
         """Populates name to id dictonary for given app
 
         Args:
             type (str): Type of app to populate, eg "AppIDs"
             app_name (str, optional): Name of the application to find IDs for. Defaults to None.
         """
-        id = self._populating_dict[type]["ID"]
-        name = self._populating_dict[type]["Name"]
-        endpoint = self._populating_dict[type]["Endpoint"]
+        obj_id = self._populating_dict[id_type]["ID"]
+        name = self._populating_dict[id_type]["Name"]
+        endpoint = self._populating_dict[id_type]["Endpoint"]
         content = self._content
 
-        if(app_name):
+        if app_name:
             endpoint = str(self._content["AppIDs"][app_name]) + f"/{endpoint}"
         response = await self._make_async_request("get", endpoint)
 
         # If working with a specific app name, move into that app name's subdictionary
-        if(app_name and app_name not in self._content):
+        if app_name and app_name not in self._content:
             content[app_name] = {}
             content = self._content[app_name]
 
-        if(type not in content):
-            content[type] = {}
+        if id_type not in content:
+            content[id_type] = {}
         for obj in response:
-            content[type][obj[name]] = obj[id]
+            content[id_type][obj[name]] = obj[obj_id]
 
-    def _make_request(self, type: str, endpoint: str, requires_auth: bool = True, body: dict = {}) -> requests.Response:
+    def _make_request(
+        self,
+        request_type: str,
+        endpoint: str,
+        requires_auth: Optional[bool] = True,
+        body: Optional[dict] = None,
+    ) -> requests.Response:
+
         """Makes a request to the remote TDx instance
 
         Args:
@@ -471,33 +589,40 @@ class TeamDynamixInstance:
         Returns:
             requests.Response: Response from the API endpoint
         """
+        if body is not None:
+            body = {}
         headers = {
             "Content-Type": "application/json; charset=utf-8",
         }
 
-        if(self._auth_token and requires_auth):
+        if self._auth_token and requires_auth:
             headers["Authorization"] = f"Bearer {self._auth_token}"
 
-        if(self._sandbox):
+        if self._sandbox:
             api_version = "SBTDWebApi"
         else:
             api_version = "TDWebApi"
 
         url = f"https://{self._domain}/{api_version}/api/{endpoint}"
 
-        if(type == "get"):
-            response = requests.get(url=url, headers=headers)
-        elif(type == "post"):
-            response = requests.post(url=url, headers=headers, json=body)
+        if request_type == "get":
+            response = requests.get(url=url, headers=headers, timeout=10)
+        elif request_type == "post":
+            response = requests.post(url=url, headers=headers, json=body, timeout=10)
         else:
-            print(f"Expected post or get, got {type}")
-            raise InvalidHTTPMethodException
+            print(f"Expected post or get, got {request_type}")
+            raise tdxapi.exceptions.InvalidHTTPMethodException
 
         return response
 
-    async def _make_async_request(self, type: str, endpoint: str, requires_auth: bool = True, body: dict = {}) -> dict:
-        
-        if(self._sandbox):
+    async def _make_async_request(
+        self,
+        id_type: str,
+        endpoint: str,
+        requires_auth: Optional[bool] = True,
+        body: Optional[dict] = None,
+    ) -> dict:
+        if self._sandbox:
             api_version = "SBTDWebApi"
         else:
             api_version = "TDWebApi"
@@ -507,20 +632,25 @@ class TeamDynamixInstance:
             "Content-Type": "application/json; charset=utf-8",
         }
 
-        if(self._auth_token and requires_auth):
+        if self._auth_token and requires_auth:
             headers["Authorization"] = f"Bearer {self._auth_token}"
 
-        if(self._api_session == None):
-            self._api_session = aiohttp.ClientSession(f"{url}", headers=headers)
+        if self._api_session is None:
+            self._api_session = aiohttp.ClientSession(
+                f"{url}", headers=headers
+            )
 
-        if(type == "get"):
-            async with self._api_session.get(f"/{api_version}/api/{endpoint}") as response:
+        if id_type == "get":
+            async with self._api_session.get(
+                f"/{api_version}/api/{endpoint}"
+            ) as response:
                 return await response.json()
-        elif(type == "post"):
-            async with self._api_session.post(f"/{api_version}/api/{endpoint}", data=body) as response:
+        elif id_type == "post":
+            async with self._api_session.post(
+                f"/{api_version}/api/{endpoint}", data=body
+            ) as response:
                 return await response.json()
         else:
-            print(f"Expected post or get, got {type}")
-            raise InvalidHTTPMethodException
-
-    pass
+            print(f"Expected post or get, got {id_type}")
+            raise tdxapi.exceptions.InvalidHTTPMethodException
+            
