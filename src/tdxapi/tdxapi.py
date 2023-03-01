@@ -90,8 +90,27 @@ class TeamDynamixInstance:
         else:
             print(f"Something went wrong checking authentication: {response.text}")
             raise NotAuthorizedException
-    
+
+    def get_domain(self) -> str:
+        """Returns the domain of the TDx as a string
+
+        Raises:
+            PropertyNotSetExcepetion: The domain has not been set
+
+        Returns:
+            str: The domain of the TDx instance as a string
+        """
+        if(type(self._domain) == str):
+            return str(self._domain)
+        else:
+            raise PropertyNotSetException
+
+    def set_domain(self, domain: str) -> None:
+        """"""
+        self._domain = domain
+
     def initialize(self) -> None:
+        """Initializes the TDx instance from the remote instance"""
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self._populate_all_ids())
         self._populate_group_ids()
@@ -104,7 +123,6 @@ class TeamDynamixInstance:
         await self._populate_ids("AssetAttributes")
         await self._populate_ids("TicketAttributes")
         return
-
 
     def populate_ids_for_app(self, app_type: str, app_name: str) -> None:
         """Populates the TDx object with IDs for a specific app, like tickets or people
@@ -335,7 +353,7 @@ class TeamDynamixInstance:
         for attr in ticket["Attributes"]:
             if(attr["Name"] == attr_name):
                 return attr
-        raise NoSuchAttribute
+        raise NoSuchAttributeException
 
     def update_ticket_status(self, ticket_id: str, status_name: str, comments: str, app_name: Optional[str] = None) -> requests.Response:
         """Updates a ticket to the given status with given comments

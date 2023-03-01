@@ -16,8 +16,8 @@ class NoDefaultAppException(Exception):
 class InvalidHTTPMethodException(Exception):
     """Not a supported HTTP Method"""
 
-class NoSuchAttribute(Exception):
+class NoSuchAttributeException(Exception):
     """The attribute could not be found in the object"""
 
-class NoSuchPerson(Exception):
-    """The person could not be found"""
+class PropertyNotSetException(Exception):
+    """The property has not been set"""
