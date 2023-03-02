@@ -85,7 +85,7 @@ class TeamDynamixInstance:
         """Creates a new TDx object to interact with the remote instance
 
         Args:
-            domain (str, optional): 
+            domain (str, optional):
             Domain of the remote instance (eg teamdynamix.umich.edu).
             Defaults to None.
 
@@ -115,7 +115,7 @@ class TeamDynamixInstance:
 
     def set_auth_token(self, token: str) -> None:
         """Sets the authentication token for accessing remote TDx Instance
-        Tokens can be retrieved using any method here: 
+        Tokens can be retrieved using any method here:
         https://teamdynamix.umich.edu/TDWebApi/Home/section/Auth
 
         Args:
@@ -324,8 +324,8 @@ class TeamDynamixInstance:
             asset (dict): Asset with updated values to be synced with TDx
 
         Returns:
-            requests.Response: 
-            The response from the remote TDx instance, 
+            requests.Response:
+            The response from the remote TDx instance,
             can be used for error handling but typically unconsumed
         """
         if app_name is None:
@@ -577,7 +577,6 @@ class TeamDynamixInstance:
         requires_auth: Optional[bool] = True,
         body: Optional[dict] = None,
     ) -> requests.Response:
-
         """Makes a request to the remote TDx instance
 
         Args:
@@ -608,7 +607,9 @@ class TeamDynamixInstance:
         if request_type == "get":
             response = requests.get(url=url, headers=headers, timeout=10)
         elif request_type == "post":
-            response = requests.post(url=url, headers=headers, json=body, timeout=10)
+            response = requests.post(
+                url=url, headers=headers, json=body, timeout=10
+            )
         else:
             print(f"Expected post or get, got {request_type}")
             raise tdxapi.exceptions.InvalidHTTPMethodException
@@ -653,4 +654,3 @@ class TeamDynamixInstance:
         else:
             print(f"Expected post or get, got {id_type}")
             raise tdxapi.exceptions.InvalidHTTPMethodException
-            
