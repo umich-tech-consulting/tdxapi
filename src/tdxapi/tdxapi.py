@@ -1,4 +1,4 @@
-"""_summary_
+"""Team Dynamix API as a Python Module.
 
 Raises:
     tdxapi.exceptions.NotAuthorizedException: _description_
@@ -24,7 +24,8 @@ import tdxapi.exceptions
 
 
 class TeamDynamixInstance:
-    """
+    """TeamDynamix Instance Representation.
+
     A representation of the remote Team Dynamix (TDx) instance, stores
     information for communicating with the remote instance and wraps the API
     for easier consumption
@@ -46,8 +47,8 @@ class TeamDynamixInstance:
     _no_owner = "00000000-0000-0000-0000-000000000000"
     # These are hardcoded into the API
     _component_ids = {"Ticket": 9, "Asset": 27}
-    # This is used to construct a name -> id dictionary so descriptive names can
-    # be used instead of vauge IDs
+    # This is used to construct a name -> id dictionary so descriptive names
+    # can be used instead of vauge IDs
     _populating_dict = {
         "AppIDs": {"Name": "Name", "ID": "AppID", "Endpoint": "applications"},
         "LocationIDs": {"Name": "Name", "ID": "ID", "Endpoint": "locations"},
@@ -64,12 +65,14 @@ class TeamDynamixInstance:
         "AssetAttributes": {
             "Name": "Name",
             "ID": "ID",
-            "Endpoint": f"attributes/custom?componentId={_component_ids['Asset']}",
+            "Endpoint":
+                f"attributes/custom?componentId={_component_ids['Asset']}",
         },
         "TicketAttributes": {
             "Name": "Name",
             "ID": "ID",
-            "Endpoint": f"attributes/custom?componentId={_component_ids['Ticket']}",
+            "Endpoint":
+                f"attributes/custom?componentId={_component_ids['Ticket']}",
         },
     }
 
@@ -82,7 +85,7 @@ class TeamDynamixInstance:
         default_asset_app_name: Optional[str] = None,
         api_session: Optional[aiohttp.ClientSession] = None,
     ) -> None:
-        """Creates a new TDx object to interact with the remote instance
+        """Create a new TDx object to interact with the remote instance.
 
         Args:
             domain (str, optional):
@@ -108,13 +111,15 @@ class TeamDynamixInstance:
         self._domain = domain
         self._auth_token = auth_token
         self._sandbox = sandbox
-        self._content = {}
+        self._content: dict = {}
         self._default_ticket_app_name = default_ticket_app_name
         self._default_asset_app_name = default_asset_app_name
         self._api_session = api_session
 
     def set_auth_token(self, token: str) -> None:
-        """Sets the authentication token for accessing remote TDx Instance
+        """Set authentication token.
+
+        Sets the authentication token for accessing remote TDx Instance
         Tokens can be retrieved using any method here:
         https://teamdynamix.umich.edu/TDWebApi/Home/section/Auth
 
@@ -124,7 +129,10 @@ class TeamDynamixInstance:
         self._auth_token = token
 
     def get_current_user(self) -> dict:
-        """Returns the currently logged in user, useful for testing if TDx can be accessed
+        """Get current TDx user.
+
+        Returns the currently logged in user,
+        useful for testing if TDx can be accessed
 
         Returns:
             dict: The current user
@@ -137,12 +145,13 @@ class TeamDynamixInstance:
             raise tdxapi.exceptions.NotAuthorizedException
         else:
             print(
-                f"Something went wrong checking authentication: {response.text}"
+                f"Something went wrong \
+                    checking authentication: {response.text}"
             )
             raise tdxapi.exceptions.NotAuthorizedException
 
     def get_domain(self) -> str:
-        """Returns the domain of the TDx as a string
+        """Get the domain of the TDx as a string.
 
         Raises:
             PropertyNotSetExcepetion: The domain has not been set
@@ -156,7 +165,7 @@ class TeamDynamixInstance:
             raise tdxapi.exceptions.PropertyNotSetException
 
     def set_domain(self, domain: str) -> None:
-        """Sets the domain of the remote TDx instance
+        """Set the domain of the remote TDx instance.
 
         Args:
             domain (str): Domain of remote instance
@@ -164,13 +173,13 @@ class TeamDynamixInstance:
         self._domain = domain
 
     def initialize(self) -> None:
-        """Initializes the TDx instance from the remote instance"""
+        """Initialize the TDx instance from the remote instance."""
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self._populate_all_ids())
         self._populate_group_ids()
 
     async def _populate_all_ids(self) -> None:
-        """Populates the TDx object with useful name to ID conversions"""
+        """Populate the TDx object with useful name to ID conversions."""
         await self._populate_ids("AppIDs")
         await self._populate_ids("LocationIDs")
         await self._populate_ids("AssetAttributes")
@@ -178,21 +187,23 @@ class TeamDynamixInstance:
         return
 
     def populate_ids_for_app(self, app_type: str, app_name: str) -> None:
-        """Populates the TDx object with IDs for a specific app, like tickets or people
+        """Retrieve IDs for specific app.
 
         Args:
             app_type (str): The type of the app, eg "AssetStatusIDs"
-            app_name (str): The name of the app in TDx to populate, eg "ITS Tickets"
+            app_name (str): The name of the app in TDx to populate,\
+                 eg "ITS Tickets"
         """
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self._populate_ids(app_type, app_name))
         return
 
     def load_auth_token(self, filename: str = "tdx.key") -> None:
-        """Loads an auth token instead of getting it through the web api
+        """Load an auth token instead of getting it through the web api.
 
         Args:
-            filename (str, optional): Filename to load the key from. Defaults to tdx.key.
+            filename (str, optional): Filename to load the key from.\
+                 Defaults to tdx.key.
         """
         try:
             keyfile = open("tdx.key", encoding="UTF-8")
@@ -203,10 +214,11 @@ class TeamDynamixInstance:
             raise exception
 
     def save_auth_token(self, filename: str = "tdx.key") -> None:
-        """Saves the auth token to a file for later use
+        """Save the auth token to a file for later use.
 
         Args:
-            filename (str, optional): File to save the auth token to. Defaults to tdx.key.
+            filename (str, optional): File to save the auth token to.\
+                 Defaults to tdx.key.
         """
         if filename is None:
             filename = "tdx.key"
@@ -229,15 +241,29 @@ class TeamDynamixInstance:
         notes: Optional[str] = None,
         app_name: Optional[str] = None,
     ) -> None:
-        """Updates the inventory status of an asset by updating location, status, owner, and notes
+        """Update asset status.
+
+        Updates the inventory status of an asset by updating location,
+        status, owner, and notes
 
         Args:
-            asset (dict): Asset to update
-            app_name (str): Asset app the asset exists in
-            location_name (str): New location name, must correlate to an ID already in TDx
-            status_name (str): New status name, must correlate to an ID already in TDx
-            owner_uid (str): New owner of the asset, removes owner if not given
-            notes (str): New notes if provided, keeps previous notes if none given
+            asset (dict):
+            Asset to update
+
+            app_name (str):
+            Asset app the asset exists in
+
+            location_name (str):
+            New location name, must correlate to an ID already in TDx
+
+            status_name (str):
+            New status name, must correlate to an ID already in TDx
+
+            owner_uid (str):
+            New owner of the asset, removes owner if not given
+
+            notes (str):
+            New notes if provided, keeps previous notes if none given
         """
         if app_name is None:
             app_name = self._default_asset_app_name
@@ -273,7 +299,7 @@ class TeamDynamixInstance:
         self.update_asset(asset)
 
     def get_asset(self, asset_id: str, app_name: Optional[str] = None) -> dict:
-        """Fetchs an asset and returns it in dictonary form
+        """Fetch an asset and returns it in dictonary form.
 
         Args:
             app_name (str): App the asset exists in
@@ -292,7 +318,8 @@ class TeamDynamixInstance:
     def search_assets(
         self, search_string: str, app_name: Optional[str] = None
     ) -> list:
-        """
+        """Find an asset.
+
         Searches for assets in the given app using the given search string
         and gives a list of matching assets as dictionaries
 
@@ -301,9 +328,9 @@ class TeamDynamixInstance:
             search_string (str): Name or Serial of the asset to be searched for
 
         Returns:
-            list: A list of dictionaries representing assets, does not include custom attributes
+            list: A list of dictionaries representing assets,
+            does not include custom attributes
         """
-
         if app_name is None:
             app_name = self._default_asset_app_name
         app_id = self._content["AppIDs"][app_name]
@@ -317,7 +344,7 @@ class TeamDynamixInstance:
     def update_asset(
         self, asset: dict, app_name: Optional[str] = None
     ) -> requests.Response:
-        """Updates an asset in TDx
+        """Update an asset in TDx.
 
         Args:
             app_name (str): App the asset to be updated exists in
@@ -350,7 +377,7 @@ class TeamDynamixInstance:
         asset_id: str,
         ticket_app_name: Optional[str] = None,
     ) -> requests.Response:
-        """Attaches an asset to a ticket in a given ticket application
+        """Attaches an asset to a ticket in a given ticket application.
 
         Args:
             ticket_app_name (str): App name the ticket exists in
@@ -358,7 +385,8 @@ class TeamDynamixInstance:
             asset_id (str): Internal TDx ID of the asset to be attached
 
         Returns:
-            requests.Response: Response from TDx, can be used for error handling
+            requests.Response: Response from TDx,
+            can be used for error handling
         """
         if ticket_app_name is None:
             ticket_app_name = self._default_ticket_app_name
@@ -368,7 +396,8 @@ class TeamDynamixInstance:
         )
         if response.status_code != 200:
             print(
-                f"Unable to attach asset {asset_id} to ticket {ticket_id}: {response.text}"
+                f"Unable to attach asset {asset_id} to ticket {ticket_id}:\
+                    {response.text}"
             )
         return response
 
@@ -380,7 +409,10 @@ class TeamDynamixInstance:
         responsible_group_name: Optional[str] = None,
         app_name: Optional[str] = None,
     ) -> list:
-        """Searches a ticket application for a ticket matching the given search criteria
+        """Search for ticket.
+
+        Searches a ticket application for a ticket matching the given\
+            search criteria
 
         Args:
             app_name (str): Name of the ticket application
@@ -393,7 +425,6 @@ class TeamDynamixInstance:
         Returns:
             list: A list of dictonaries representing tickets
         """
-
         if app_name is None:
             app_name = self._default_ticket_app_name
         status_ids = []
@@ -426,7 +457,9 @@ class TeamDynamixInstance:
     def get_ticket(
         self, ticket_id: str, app_name: Optional[str] = None
     ) -> dict:
-        """Gets a full ticket based on ID, includes custom attributes
+        """Get full ticket.
+
+        Gets a full ticket based on ID, includes custom attributes
 
         Args:
             app_name (str): Name of the ticket app the ticket exists in
@@ -435,7 +468,6 @@ class TeamDynamixInstance:
         Returns:
             dict: Dictonary representing the ticket
         """
-
         if app_name is None:
             app_name = self._default_ticket_app_name
         app_id = self._content["AppIDs"][app_name]
@@ -445,8 +477,7 @@ class TeamDynamixInstance:
 
     def get_ticket_attribute(self, ticket: dict, attr_name: str) -> dict:
         """
-        Gets a specific attribute from a ticket,
-        since attributes are returned from the API in an unordered list
+        Get a specific attribute from a ticket.
 
         Args:
             ticket (dict): Ticket to pull attribute from
@@ -467,7 +498,7 @@ class TeamDynamixInstance:
         comments: str,
         app_name: Optional[str] = None,
     ) -> requests.Response:
-        """Updates a ticket to the given status with given comments
+        """Update a ticket status.
 
         Args:
             ticket_id (str): Ticket number
@@ -502,7 +533,7 @@ class TeamDynamixInstance:
     #####################
 
     def search_people(self, alt_id: str) -> dict:
-        """Searches for a person with provided alt_id
+        """Search for a person with provided alt_id.
 
         Args:
             alt_id (str): Alternate ID assigned to person (ie uniqname)
@@ -526,7 +557,7 @@ class TeamDynamixInstance:
     #####################
 
     def _populate_group_ids(self) -> None:
-        """Populates the group name to ID dictonary for the TDx instance"""
+        """Populate the group name to ID dictonary for the TDx instance."""
         response = self._make_request("post", "groups/search")
         if response.status_code != 200:
             print("Could not populate groups")
@@ -545,11 +576,14 @@ class TeamDynamixInstance:
     async def _populate_ids(
         self, id_type: str, app_name: Optional[str] = None
     ) -> None:
-        """Populates name to id dictonary for given app
+        """Populate name to id dictonary for given app.
 
         Args:
-            type (str): Type of app to populate, eg "AppIDs"
-            app_name (str, optional): Name of the application to find IDs for. Defaults to None.
+            type (str):
+            Type of app to populate, eg "AppIDs"
+
+            app_name (str, optional):
+            Name of the application to find IDs for. Defaults to None.
         """
         obj_id = self._populating_dict[id_type]["ID"]
         name = self._populating_dict[id_type]["Name"]
@@ -560,7 +594,8 @@ class TeamDynamixInstance:
             endpoint = str(self._content["AppIDs"][app_name]) + f"/{endpoint}"
         response = await self._make_async_request("get", endpoint)
 
-        # If working with a specific app name, move into that app name's subdictionary
+        # If working with a specific app name,
+        # move into that app name's subdictionary
         if app_name and app_name not in self._content:
             content[app_name] = {}
             content = self._content[app_name]
@@ -577,13 +612,20 @@ class TeamDynamixInstance:
         requires_auth: Optional[bool] = True,
         body: Optional[dict] = None,
     ) -> requests.Response:
-        """Makes a request to the remote TDx instance
+        """Make a request to the remote TDx instance.
 
         Args:
-            type (str): The type of request to make, eg "post", "get"
-            endpoint (str): Api endpoint to send the request to, eg "assets/statuses"
-            requires_auth (bool, optional): Whether the request requires . Defaults to True.
-            body (dict, optional): Body of the request to send. Defaults to {}.
+            type (str):
+            The type of request to make, eg "post", "get"
+
+            endpoint (str):
+            Api endpoint to send the request to, eg "assets/statuses"
+
+            requires_auth (bool, optional):
+            Whether the request requires . Defaults to True.
+
+            body (dict, optional):
+            Body of the request to send. Defaults to {}.
 
         Returns:
             requests.Response: Response from the API endpoint
