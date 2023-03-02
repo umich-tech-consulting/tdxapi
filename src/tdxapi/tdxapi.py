@@ -48,7 +48,7 @@ class TeamDynamixInstance:
     # These are hardcoded into the API
     _component_ids = {"Ticket": 9, "Asset": 27}
     # This is used to construct a name -> id dictionary so descriptive names
-    # can be used instead of vauge IDs
+    # can be used instead of vague IDs
     _populating_dict = {
         "AppIDs": {"Name": "Name", "ID": "AppID", "Endpoint": "applications"},
         "LocationIDs": {"Name": "Name", "ID": "ID", "Endpoint": "locations"},
@@ -65,12 +65,14 @@ class TeamDynamixInstance:
         "AssetAttributes": {
             "Name": "Name",
             "ID": "ID",
+            "Endpoint": f"attributes/custom?componentId={_component_ids['Asset']}",
             "Endpoint": f"attributes/custom?componentId=\
                 {_component_ids['Asset']}",
         },
         "TicketAttributes": {
             "Name": "Name",
             "ID": "ID",
+            "Endpoint": f"attributes/custom?componentId={_component_ids['Ticket']}",
             "Endpoint": f"attributes/custom?componentId=\
                 {_component_ids['Ticket']}",
         },
@@ -154,7 +156,7 @@ class TeamDynamixInstance:
         """Get the domain of the TDx as a string.
 
         Raises:
-            PropertyNotSetExcepetion: The domain has not been set
+            PropertyNotSetException: The domain has not been set
 
         Returns:
             str: The domain of the TDx instance as a string
@@ -299,14 +301,14 @@ class TeamDynamixInstance:
         self.update_asset(asset)
 
     def get_asset(self, asset_id: str, app_name: Optional[str] = None) -> dict:
-        """Fetch an asset and returns it in dictonary form.
+        """Fetch an asset and returns it in dictionary form.
 
         Args:
             app_name (str): App the asset exists in
             asset_id (str): Internal TDx ID of the asset
 
         Returns:
-            dict: Asset as dictonary, includes custom attributes
+            dict: Asset as dictionary, includes custom attributes
         """
         if app_name is None:
             app_name = self._default_asset_app_name
@@ -423,7 +425,7 @@ class TeamDynamixInstance:
             Name of the group ticket is assigned to. Defaults to None.
 
         Returns:
-            list: A list of dictonaries representing tickets
+            list: A list of dictionaries representing tickets
         """
         if app_name is None:
             app_name = self._default_ticket_app_name
@@ -438,7 +440,7 @@ class TeamDynamixInstance:
             "StatusIDs": status_ids,
         }
         if responsible_group_name is not None:
-            body["ResponsiblityGroupIDs"] = [
+            body["ResponsibilityGroupIDs"] = [
                 self._content["GroupIDs"][responsible_group_name]
             ]
         response = self._make_request(
@@ -466,7 +468,7 @@ class TeamDynamixInstance:
             ticket_id (str): Ticket number
 
         Returns:
-            dict: Dictonary representing the ticket
+            dict: Dictionary representing the ticket
         """
         if app_name is None:
             app_name = self._default_ticket_app_name
@@ -484,7 +486,7 @@ class TeamDynamixInstance:
             attr_name (str): Internal TDx name of the attribute, usually ugly
 
         Returns:
-            dict: Dictonary of the attribute
+            dict: Dictionary of the attribute
         """
         for attr in ticket["Attributes"]:
             if attr["Name"] == attr_name:
@@ -539,7 +541,7 @@ class TeamDynamixInstance:
             alt_id (str): Alternate ID assigned to person (ie uniqname)
 
         Returns:
-            dict: Dictonary representing the person if found
+            dict: Dictionary representing the person if found
         """
         body = {"AlternateID": alt_id}
         response = self._make_request("post", "people/search", body=body)
@@ -557,7 +559,7 @@ class TeamDynamixInstance:
     #####################
 
     def _populate_group_ids(self) -> None:
-        """Populate the group name to ID dictonary for the TDx instance."""
+        """Populate the group name to ID dictionary for the TDx instance."""
         response = self._make_request("post", "groups/search")
         if response.status_code != 200:
             print("Could not populate groups")
@@ -576,7 +578,7 @@ class TeamDynamixInstance:
     async def _populate_ids(
         self, id_type: str, app_name: Optional[str] = None
     ) -> None:
-        """Populate name to id dictonary for given app.
+        """Populate name to id dictionary for given app.
 
         Args:
             type (str):
