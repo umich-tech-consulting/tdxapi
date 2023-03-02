@@ -65,14 +65,12 @@ class TeamDynamixInstance:
         "AssetAttributes": {
             "Name": "Name",
             "ID": "ID",
-            "Endpoint": f"attributes/custom?componentId={_component_ids['Asset']}",
             "Endpoint": f"attributes/custom?componentId=\
                 {_component_ids['Asset']}",
         },
         "TicketAttributes": {
             "Name": "Name",
             "ID": "ID",
-            "Endpoint": f"attributes/custom?componentId={_component_ids['Ticket']}",
             "Endpoint": f"attributes/custom?componentId=\
                 {_component_ids['Ticket']}",
         },
