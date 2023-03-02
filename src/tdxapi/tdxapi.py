@@ -15,6 +15,7 @@ Returns:
 """
 import asyncio
 from datetime import date
+from http import HTTPStatus
 from typing import Optional
 
 import aiohttp
@@ -138,10 +139,10 @@ class TeamDynamixInstance:
             dict: The current user
         """
         response = self._make_request("get", "auth/getuser", True)
-        if response.status_code == 200:
+        if response.ok:
             user = response.json()
             return user
-        elif response.status_code == 401:
+        elif response.status_code == HTTPStatus.UNAUTHORIZED:
             raise tdxapi.exceptions.NotAuthorizedException
         else:
             print(
@@ -361,7 +362,7 @@ class TeamDynamixInstance:
         response = self._make_request(
             "post", f"{app_id}/assets/{asset['ID']}", body=asset
         )
-        if response.status_code != 200:
+        if not response.ok:
             print(f"Unable to update asset: {response.text}")
         return response
 
@@ -394,7 +395,7 @@ class TeamDynamixInstance:
         response = self._make_request(
             "post", f"{app_id}/tickets/{ticket_id}/assets/{asset_id}"
         )
-        if response.status_code != 200:
+        if not response.ok:
             print(
                 f"Unable to attach asset {asset_id} to ticket {ticket_id}:\
                     {response.text}"
@@ -522,7 +523,7 @@ class TeamDynamixInstance:
         response = self._make_request(
             "post", f"{app_id}/tickets/{ticket_id}/feed", body=body
         )
-        if response.status_code != 200:
+        if not response.ok:
             print(f"Unable to update ticket status: {response.text}")
         return response
 
@@ -544,7 +545,7 @@ class TeamDynamixInstance:
         body = {"AlternateID": alt_id}
         response = self._make_request("post", "people/search", body=body)
 
-        if response.status_code != 200:
+        if not response.ok:
             print(f"Unable to search user: {response.text}")
             raise tdxapi.exceptions.RequestFailedException
         people = response.json()
@@ -559,7 +560,7 @@ class TeamDynamixInstance:
     def _populate_group_ids(self) -> None:
         """Populate the group name to ID dictionary for the TDx instance."""
         response = self._make_request("post", "groups/search")
-        if response.status_code != 200:
+        if not response.ok:
             print("Could not populate groups")
             return
         groups = response.json()
@@ -630,7 +631,7 @@ class TeamDynamixInstance:
         Returns:
             requests.Response: Response from the API endpoint
         """
-        if body is not None:
+        if body is None:
             body = {}
         headers = {
             "Content-Type": "application/json; charset=utf-8",
