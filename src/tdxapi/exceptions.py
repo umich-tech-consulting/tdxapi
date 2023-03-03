@@ -1,4 +1,4 @@
-"""TDxApi exceptions."""
+"""TDXAPI Exceptions."""
 
 
 class ObjectNotFoundException(Exception):
