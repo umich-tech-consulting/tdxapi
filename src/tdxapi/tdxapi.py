@@ -77,7 +77,7 @@ class TeamDynamixInstance:
         },
     }
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         domain: str = "",
         auth_token: str = "",
@@ -142,14 +142,14 @@ class TeamDynamixInstance:
         if response.ok:
             user = response.json()
             return user
-        elif response.status_code == HTTPStatus.UNAUTHORIZED:
+        if response.status_code == HTTPStatus.UNAUTHORIZED:
             raise tdxapi.exceptions.NotAuthorizedException
-        else:
-            print(
-                f"Something went wrong \
-                    checking authentication: {response.text}"
-            )
-            raise tdxapi.exceptions.NotAuthorizedException
+
+        print(
+            f"Something went wrong \
+                checking authentication: {response.text}"
+        )
+        raise tdxapi.exceptions.NotAuthorizedException
 
     def get_domain(self) -> str:
         """Get the domain of the TDx as a string.
@@ -162,8 +162,7 @@ class TeamDynamixInstance:
         """
         if self._domain:
             return self._domain
-        else:
-            raise tdxapi.exceptions.PropertyNotSetException
+        raise tdxapi.exceptions.PropertyNotSetException
 
     def set_domain(self, domain: str) -> None:
         """Set the domain of the remote TDx instance.
@@ -197,7 +196,6 @@ class TeamDynamixInstance:
         """
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self._populate_ids(app_type, app_name))
-        return
 
     def load_auth_token(self, filename: str = "tdx.key") -> None:
         """Load an auth token instead of getting it through the web api.
@@ -207,9 +205,8 @@ class TeamDynamixInstance:
                  Defaults to tdx.key.
         """
         try:
-            keyfile = open("tdx.key", encoding="UTF-8")
-            self.set_auth_token(keyfile.read())
-            keyfile.close()
+            with open("tdx.key", encoding="UTF-8") as keyfile:
+                self.set_auth_token(keyfile.read())
         except FileNotFoundError as exception:
             print(f"File {filename} not found")
             raise exception
@@ -221,9 +218,8 @@ class TeamDynamixInstance:
             filename (str, optional): File to save the auth token to.\
                  Defaults to tdx.key.
         """
-        keyfile = open(filename, "w+", encoding="UTF-8")
-        keyfile.write(str(self._auth_token))
-        keyfile.close()
+        with open(filename, encoding="UTF-8") as keyfile:
+            keyfile.write(str(self._auth_token))
 
     ##################
     #                #
@@ -231,7 +227,7 @@ class TeamDynamixInstance:
     #                #
     ##################
 
-    def inventory_asset(
+    def inventory_asset(  # pylint: disable=too-many-arguments
         self,
         asset: dict[str, Any],
         location_name: str,
@@ -400,7 +396,7 @@ class TeamDynamixInstance:
             )
         return response
 
-    def search_tickets(
+    def search_tickets(  # pylint: disable=too-many-arguments
         self,
         requester_uid: str,
         status_names: list[str],
@@ -606,8 +602,8 @@ class TeamDynamixInstance:
         self,
         request_type: str,
         endpoint: str,
-        requires_auth: Optional[bool] = True,
-        body: dict[str, Any] = {},
+        requires_auth: bool = True,
+        body: Optional[dict[str, Any]] = None,
     ) -> requests.Response:
         """Make a request to the remote TDx instance.
 
@@ -657,8 +653,8 @@ class TeamDynamixInstance:
         self,
         id_type: str,
         endpoint: str,
-        requires_auth: Optional[bool] = True,
-        body: dict[str, Any] = {},
+        requires_auth: bool = True,
+        body: Optional[dict[str, Any]] = None,
     ) -> dict[Any, Any]:
         if self._sandbox:
             api_version = "SBTDWebApi"
