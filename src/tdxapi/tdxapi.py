@@ -527,7 +527,7 @@ class TeamDynamixInstance:
     #                   #
     #####################
 
-    def search_people(self, alt_id: str) -> dict[str, Any]:
+    def search_people(self, alt_id: str) -> list[dict[str, Any]]:
         """Search for a person with provided alt_id.
 
         Args:
