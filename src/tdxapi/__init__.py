@@ -3,3 +3,4 @@
 __all__ = ["tdxapi", "exceptions"]
 
 from .tdxapi import *
+from .exceptions import *
