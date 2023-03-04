@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "tdxapi"
 authors = [
     { name="Owain Kert", email="owaink@umich.edu" },
+    { name="Chris Xiao", email="chrisx@umich.edu" }
 ]
 description = "Python wrapper for the TeamDynamix Web Api"
 readme = "README.md"
