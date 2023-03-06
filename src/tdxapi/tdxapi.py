@@ -101,6 +101,11 @@ class TeamDynamixInstance:
         self._default_asset_app_name = default_asset_app_name
         self._api_session = api_session
 
+    def __del__(self) -> None:
+        """Deconstructor for TDx."""
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.close_api_session())
+
     async def close_api_session(self) -> None:
         """Close the API session."""
         if isinstance(self._api_session, aiohttp.ClientSession):
