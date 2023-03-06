@@ -101,6 +101,11 @@ class TeamDynamixInstance:
         self._default_asset_app_name = default_asset_app_name
         self._api_session = api_session
 
+    async def close_api_session(self) -> None:
+        """Close the API session."""
+        if isinstance(self._api_session, aiohttp.ClientSession):
+            await self._api_session.close()
+
     def set_auth_token(self, token: str) -> None:
         """Set authentication token.
 
