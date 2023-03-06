@@ -1,18 +1,4 @@
-"""Team Dynamix API as a Python Module.
-
-Raises:
-    tdxapi.exceptions.NotAuthorizedException: _description_
-    tdxapi.exceptions.NotAuthorizedException: _description_
-    tdxapi.exceptions.PropertyNotSetException: _description_
-    exception: _description_
-    tdxapi.exceptions.NoSuchAttributeException: _description_
-    tdxapi.exceptions.RequestFailedException: _description_
-    tdxapi.exceptions.InvalidHTTPMethodException: _description_
-    tdxapi.exceptions.InvalidHTTPMethodException: _description_
-
-Returns:
-    _type_: _description_
-"""
+"""Team Dynamix API as a Python Module."""
 import asyncio
 from datetime import date
 from http import HTTPStatus
@@ -33,12 +19,10 @@ class TeamDynamixInstance:
 
     Raises:
         tdxapi.exceptions.NotAuthorizedException: _description_
-        tdxapi.exceptions.NotAuthorizedException: _description_
         tdxapi.exceptions.PropertyNotSetException: _description_
         exception: _description_
         tdxapi.exceptions.NoSuchAttributeException: _description_
         tdxapi.exceptions.RequestFailedException: _description_
-        tdxapi.exceptions.InvalidHTTPMethodException: _description_
         tdxapi.exceptions.InvalidHTTPMethodException: _description_
 
     Returns:
@@ -174,6 +158,7 @@ class TeamDynamixInstance:
 
     def initialize(self) -> None:
         """Initialize the TDx instance from the remote instance."""
+        print(f"Logged in as {self.get_current_user()['PrimaryEmail']}")
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self._populate_all_ids())
         self._populate_group_ids()
@@ -218,7 +203,7 @@ class TeamDynamixInstance:
             filename (str, optional): File to save the auth token to.\
                  Defaults to tdx.key.
         """
-        with open(filename, encoding="UTF-8") as keyfile:
+        with open(filename, "w+", encoding="UTF-8") as keyfile:
             keyfile.write(str(self._auth_token))
 
     ##################
@@ -626,6 +611,8 @@ class TeamDynamixInstance:
         headers = {
             "Content-Type": "application/json; charset=utf-8",
         }
+        if not body:
+            body = {}
 
         if self._auth_token and requires_auth:
             headers["Authorization"] = f"Bearer {self._auth_token}"
