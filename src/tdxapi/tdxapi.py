@@ -311,7 +311,8 @@ class TeamDynamixInstance:
         """Find an asset.
 
         Searches for assets in the given app using the given search string
-        and gives a list of matching assets as dictionaries
+        and gives a list of matching assets as dictionaries. Does NOT return
+        custom attributes. For custom attributes, use get_asset()
 
         Args:
             app_name (str): App to search in
