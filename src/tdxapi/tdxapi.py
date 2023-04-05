@@ -230,6 +230,7 @@ class TeamDynamixInstance:
         owner_uid: str = "",
         notes: str = "",
         app_name: str = "",
+        update_inv_date: bool = False
     ) -> None:
         """Update asset status.
 
@@ -272,14 +273,14 @@ class TeamDynamixInstance:
                 attr["Value"] = notes
             if attr["Name"] == "Last Inventoried":
                 attr["Value"] = date.today().strftime("%m/%d/%Y")
-        if "Last Inventoried" not in existing_attributes:
+        if "Last Inventoried" not in existing_attributes and update_inv_date:
             asset["Attributes"].append(
                 {
                     "ID": self._content["AssetAttributes"]["Last Inventoried"],
                     "Value": date.today().strftime("%m/%d/%Y"),
                 }
             )
-        if "Notes" not in existing_attributes:
+        if "Notes" not in existing_attributes and notes != "":
             asset["Attributes"].append(
                 {
                     "ID": self._content["AssetAttributes"]["Notes"],
