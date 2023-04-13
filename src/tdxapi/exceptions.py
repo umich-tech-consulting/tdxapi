@@ -31,3 +31,7 @@ class NoSuchAttributeException(Exception):
 
 class PropertyNotSetException(Exception):
     """The property has not been set."""
+
+
+class InvalidParameterException(Exception):
+    """Provided parameter is not valid."""

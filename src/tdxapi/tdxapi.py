@@ -6,7 +6,7 @@ from typing import Any, Optional
 import aiohttp
 import requests
 
-import tdxapi.exceptions
+from tdxapi import exceptions
 
 
 class TeamDynamixInstance:
@@ -28,12 +28,12 @@ class TeamDynamixInstance:
         _type_: _description_
     """
 
-    _no_owner = "00000000-0000-0000-0000-000000000000"
+    no_owner_uid: str = "00000000-0000-0000-0000-000000000000"
     # These are hardcoded into the API
-    _component_ids = {"Ticket": 9, "Asset": 27}
+    _component_ids: dict[str, int] = {"Ticket": 9, "Asset": 27}
     # This is used to construct a name -> id dictionary so descriptive names
     # can be used instead of vague IDs
-    _populating_dict = {
+    _populating_dict: dict[str, dict[str, str]] = {
         "AppIDs": {"Name": "Name", "ID": "AppID", "Endpoint": "applications"},
         "LocationIDs": {"Name": "Name", "ID": "ID", "Endpoint": "locations"},
         "AssetStatusIDs": {
@@ -92,18 +92,54 @@ class TeamDynamixInstance:
             Asset app to use when none is defined.
             Default to None.
         """
-        self._domain = domain
-        self._auth_token = auth_token
-        self._sandbox = sandbox
+        self._domain: str = domain
+        self._auth_token: str = auth_token
+        self._sandbox: bool = sandbox
         self._content: dict[str, Any] = {}
-        self._default_ticket_app_name = default_ticket_app_name
-        self._default_asset_app_name = default_asset_app_name
-        self._api_session = api_session
+        self._default_ticket_app_name: str = default_ticket_app_name
+        self._default_asset_app_name: str = default_asset_app_name
+        self._api_session: aiohttp.ClientSession | None = api_session
 
     def __del__(self) -> None:
         """Deconstructor for TDx."""
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self.close_api_session())
+
+    def get_id(
+        self,
+        app_name: str,
+        name: str,
+        id_type: Optional[str] = None
+    ) -> str:
+        """Convert a name to an ID.
+
+        Args:
+            app_name (str): App to search for the ID with given name
+            id_type (str): Type of the ID (ie AssetStatusIDs)
+            name (str): Name to convert to ID
+
+        Returns:
+            str: ID of the object
+        """
+        if id_type:
+            return self._content[app_name][id_type][name]
+        else:
+            return self._content[app_name][name]
+
+    def get_default_app_name(self, app_type: str) -> str:
+        """Get the default name of an app type.
+
+        Args:
+            app_type (str): App type to get (ie Asset, Ticket)
+
+        Returns:
+            str: Name of the default app
+        """
+        if app_type == "Asset":
+            return self._default_asset_app_name
+        if app_type == "Ticket":
+            return self._default_ticket_app_name
+        raise exceptions.InvalidParameterException
 
     async def close_api_session(self) -> None:
         """Close the API session."""
@@ -131,18 +167,19 @@ class TeamDynamixInstance:
         Returns:
             dict: The current user
         """
-        response = self._make_request("get", "auth/getuser", True)
+        response: requests.Response = self._make_request(
+            "get", "auth/getuser", True)
         if response.ok:
             user = response.json()
             return user
         if response.status_code == HTTPStatus.UNAUTHORIZED:
-            raise tdxapi.exceptions.NotAuthorizedException
+            raise exceptions.NotAuthorizedException
 
         print(
             f"Something went wrong \
                 checking authentication: {response.text}"
         )
-        raise tdxapi.exceptions.NotAuthorizedException
+        raise exceptions.NotAuthorizedException
 
     def get_domain(self) -> str:
         """Get the domain of the TDx as a string.
@@ -155,7 +192,7 @@ class TeamDynamixInstance:
         """
         if self._domain:
             return self._domain
-        raise tdxapi.exceptions.PropertyNotSetException
+        raise exceptions.PropertyNotSetException
 
     def set_domain(self, domain: str) -> None:
         """Set the domain of the remote TDx instance.
@@ -357,7 +394,7 @@ class TeamDynamixInstance:
                 self._content[app_name]["TicketStatusIDs"][status_name]
             )
         app_id = self._content["AppIDs"][app_name]
-        body = {
+        body: dict[str, list[str] | list[int]] = {
             "RequestorUids": [requester_uid],
             "StatusIDs": status_ids,
         }
@@ -413,7 +450,7 @@ class TeamDynamixInstance:
         for attr in ticket["Attributes"]:
             if attr["Name"] == attr_name:
                 return attr
-        raise tdxapi.exceptions.NoSuchAttributeException
+        raise exceptions.NoSuchAttributeException
 
     def update_ticket_status(
         self,
@@ -437,7 +474,7 @@ class TeamDynamixInstance:
             app_name = self._default_ticket_app_name
         app_id = self._content["AppIDs"][app_name]
         status_id = self._content[app_name]["TicketStatusIDs"][status_name]
-        body = {
+        body: dict[str, Any | str | bool] = {
             "NewStatusID": status_id,
             "Comments": comments,
             "IsPrivate": True,
@@ -465,12 +502,12 @@ class TeamDynamixInstance:
         Returns:
             dict: Dictionary representing the person if found
         """
-        body = {"AlternateID": alt_id}
+        body: dict[str, str] = {"AlternateID": alt_id}
         response = self._make_request("post", "people/search", body=body)
 
         if not response.ok:
             print(f"Unable to search user: {response.text}")
-            raise tdxapi.exceptions.RequestFailedException
+            raise exceptions.RequestFailedException
         people = response.json()
         return people
 
@@ -507,14 +544,15 @@ class TeamDynamixInstance:
             app_name (str, optional):
             Name of the application to find IDs for. Defaults to None.
         """
-        obj_id = self._populating_dict[id_type]["ID"]
-        name = self._populating_dict[id_type]["Name"]
-        endpoint = self._populating_dict[id_type]["Endpoint"]
-        content = self._content
+        obj_id: str = self._populating_dict[id_type]["ID"]
+        name: str = self._populating_dict[id_type]["Name"]
+        endpoint: str = self._populating_dict[id_type]["Endpoint"]
+        content: dict[str, Any] = self._content
 
         if app_name:
             endpoint = str(self._content["AppIDs"][app_name]) + f"/{endpoint}"
-        response = await self._make_async_request("get", endpoint)
+        response: dict[Any, Any] = await self._make_async_request(
+            "get", endpoint)
 
         # If working with a specific app name,
         # move into that app name's subdictionary
@@ -552,7 +590,7 @@ class TeamDynamixInstance:
         Returns:
             requests.Response: Response from the API endpoint
         """
-        headers = {
+        headers: dict[str, str] = {
             "Content-Type": "application/json; charset=utf-8",
         }
         if not body:
@@ -566,7 +604,7 @@ class TeamDynamixInstance:
         else:
             api_version = "TDWebApi"
 
-        url = f"https://{self._domain}/{api_version}/api/{endpoint}"
+        url: str = f"https://{self._domain}/{api_version}/api/{endpoint}"
 
         if request_type == "get":
             response = requests.get(url=url, headers=headers, timeout=10)
@@ -576,7 +614,7 @@ class TeamDynamixInstance:
             )
         else:
             print(f"Expected post or get, got {request_type}")
-            raise tdxapi.exceptions.InvalidHTTPMethodException
+            raise exceptions.InvalidHTTPMethodException
 
         return response
 
@@ -592,8 +630,8 @@ class TeamDynamixInstance:
         else:
             api_version = "TDWebApi"
 
-        url = f"https://{self._domain}"
-        headers = {
+        url: str = f"https://{self._domain}"
+        headers: dict[str, str] = {
             "Content-Type": "application/json; charset=utf-8",
         }
 
@@ -617,4 +655,4 @@ class TeamDynamixInstance:
                 return await response.json()
         else:
             print(f"Expected post or get, got {id_type}")
-            raise tdxapi.exceptions.InvalidHTTPMethodException
+            raise exceptions.InvalidHTTPMethodException
