@@ -1,6 +1,5 @@
 """Team Dynamix API as a Python Module."""
 import asyncio
-from datetime import date
 from http import HTTPStatus
 from typing import Any, Optional
 
@@ -221,73 +220,6 @@ class TeamDynamixInstance:
     #     Assets     #
     #                #
     ##################
-
-    def inventory_asset(  # pylint: disable=too-many-arguments
-        self,
-        asset: dict[str, Any],
-        location_name: str,
-        status_name: str,
-        owner_uid: str = "",
-        notes: str = "",
-        app_name: str = "",
-        update_inv_date: bool = False
-    ) -> None:
-        """Update asset status.
-
-        Updates the inventory status of an asset by updating location,
-        status, owner, and notes
-
-        Args:
-            asset (dict):
-            Asset to update
-
-            app_name (str):
-            Asset app the asset exists in
-
-            location_name (str):
-            New location name, must correlate to an ID already in TDx
-
-            status_name (str):
-            New status name, must correlate to an ID already in TDx
-
-            owner_uid (str):
-            New owner of the asset, removes owner if not given
-
-            notes (str):
-            New notes if provided, keeps previous notes if none given
-        """
-        if app_name == "":
-            app_name = self._default_asset_app_name
-        asset["LocationID"] = self._content["LocationIDs"][location_name]
-        asset["StatusID"] = self._content[app_name]["AssetStatusIDs"][
-            status_name
-        ]
-        if not owner_uid:
-            asset["OwningCustomerID"] = self._no_owner
-        else:
-            asset["OwningCustomerID"] = owner_uid
-        existing_attributes: list[str] = []
-        for attr in asset["Attributes"]:
-            existing_attributes.append(attr["Name"])
-            if attr["Name"] == "Notes":
-                attr["Value"] = notes
-            if attr["Name"] == "Last Inventoried":
-                attr["Value"] = date.today().strftime("%m/%d/%Y")
-        if "Last Inventoried" not in existing_attributes and update_inv_date:
-            asset["Attributes"].append(
-                {
-                    "ID": self._content["AssetAttributes"]["Last Inventoried"],
-                    "Value": date.today().strftime("%m/%d/%Y"),
-                }
-            )
-        if "Notes" not in existing_attributes and notes != "":
-            asset["Attributes"].append(
-                {
-                    "ID": self._content["AssetAttributes"]["Notes"],
-                    "Value": notes,
-                }
-            )
-        self.update_asset(asset)
 
     def get_asset(self, asset_id: str, app_name: str = "") -> dict[str, Any]:
         """Fetch an asset and returns it in dictionary form.
