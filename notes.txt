@@ -1,0 +1,1 @@
+stubgen -p tdxapi -o .
