@@ -100,10 +100,6 @@ class TeamDynamixInstance:
         self._default_asset_app_name: str = default_asset_app_name
         self._api_session: aiohttp.ClientSession | None = api_session
 
-    def __del__(self) -> None:
-        """Deconstructor for TDx."""
-        asyncio.run(self.close_api_session())
-
     def get_id(
         self,
         app_name: str,
