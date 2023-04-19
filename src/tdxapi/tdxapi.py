@@ -102,8 +102,7 @@ class TeamDynamixInstance:
 
     def __del__(self) -> None:
         """Deconstructor for TDx."""
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.close_api_session())
+        asyncio.run(self.close_api_session())
 
     def get_id(
         self,
@@ -202,11 +201,15 @@ class TeamDynamixInstance:
         """
         self._domain = domain
 
-    def initialize(self) -> None:
+    async def initialize(self) -> None:
         """Initialize the TDx instance from the remote instance."""
         print(f"Logged in as {self.get_current_user()['PrimaryEmail']}")
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._populate_all_ids())
+        tasks: list[Any] = []
+        tasks.append(self._populate_ids("AppIDs"))
+        tasks.append(self._populate_ids("LocationIDs"))
+        tasks.append(self._populate_ids("AssetAttributes"))
+        tasks.append(self._populate_ids("TicketAttributes"))
+        await asyncio.gather(*tasks)
         self._populate_group_ids()
 
     async def _populate_all_ids(self) -> None:
@@ -217,7 +220,7 @@ class TeamDynamixInstance:
         await self._populate_ids("TicketAttributes")
         return
 
-    def populate_ids_for_app(self, app_type: str, app_name: str) -> None:
+    async def populate_ids_for_app(self, app_type: str, app_name: str) -> None:
         """Retrieve IDs for specific app.
 
         Args:
@@ -225,8 +228,7 @@ class TeamDynamixInstance:
             app_name (str): The name of the app in TDx to populate,\
                  eg "ITS Tickets"
         """
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._populate_ids(app_type, app_name))
+        await self._populate_ids(app_type, app_name)
 
     def load_auth_token(self, filename: str = "tdx.key") -> None:
         """Load an auth token instead of getting it through the web api.
@@ -258,7 +260,11 @@ class TeamDynamixInstance:
     #                #
     ##################
 
-    def get_asset(self, asset_id: str, app_name: str = "") -> dict[str, Any]:
+    async def get_asset(
+            self,
+            asset_id: str,
+            app_name: str = ""
+    ) -> dict[str, Any]:
         """Fetch an asset and returns it in dictionary form.
 
         Args:
@@ -271,11 +277,13 @@ class TeamDynamixInstance:
         if not app_name:
             app_name = self._default_asset_app_name
         app_id = self._content["AppIDs"][app_name]
-        response = self._make_request("get", f"{app_id}/assets/{asset_id}")
-        asset = response.json()
+        response = await self._make_async_request(
+            "get", f"{app_id}/assets/{asset_id}"
+        )
+        asset = await response.json()
         return asset
 
-    def search_assets(
+    async def search_assets(
         self, search_string: str, app_name: str = ""
     ) -> list[dict[str, Any]]:
         """Find an asset.
@@ -296,15 +304,15 @@ class TeamDynamixInstance:
             app_name = self._default_asset_app_name
         app_id = self._content["AppIDs"][app_name]
         body = {"SerialLike": search_string}
-        response = self._make_request(
+        response: aiohttp.ClientResponse = await self._make_async_request(
             "post", f"{app_id}/assets/search", body=body
         )
-        assets = response.json()
+        assets = await response.json()
         return assets
 
-    def update_asset(
+    async def update_asset(
         self, asset: dict[str, Any], app_name: str = ""
-    ) -> requests.Response:
+    ) -> aiohttp.ClientResponse:
         """Update an asset in TDx.
 
         Args:
@@ -319,11 +327,11 @@ class TeamDynamixInstance:
         if not app_name:
             app_name = self._default_asset_app_name
         app_id = self._content["AppIDs"][app_name]
-        response = self._make_request(
+        response = await self._make_async_request(
             "post", f"{app_id}/assets/{asset['ID']}", body=asset
         )
         if not response.ok:
-            print(f"Unable to update asset: {response.text}")
+            print(f"Unable to update asset: {response.text()}")
         return response
 
     ###################
@@ -551,8 +559,9 @@ class TeamDynamixInstance:
 
         if app_name:
             endpoint = str(self._content["AppIDs"][app_name]) + f"/{endpoint}"
-        response: dict[Any, Any] = await self._make_async_request(
+        response: aiohttp.ClientResponse = await self._make_async_request(
             "get", endpoint)
+        response_data = await response.json()
 
         # If working with a specific app name,
         # move into that app name's subdictionary
@@ -562,7 +571,7 @@ class TeamDynamixInstance:
 
         if id_type not in content:
             content[id_type] = {}
-        for obj in response:
+        for obj in response_data:
             content[id_type][obj[name]] = obj[obj_id]
 
     def _make_request(
@@ -624,7 +633,7 @@ class TeamDynamixInstance:
         endpoint: str,
         requires_auth: bool = True,
         body: Optional[dict[str, Any]] = None,
-    ) -> dict[Any, Any]:
+    ) -> aiohttp.ClientResponse:
         if self._sandbox:
             api_version = "SBTDWebApi"
         else:
@@ -635,6 +644,9 @@ class TeamDynamixInstance:
             "Content-Type": "application/json; charset=utf-8",
         }
 
+        if not body:
+            body = {}
+
         if self._auth_token and requires_auth:
             headers["Authorization"] = f"Bearer {self._auth_token}"
 
@@ -644,15 +656,14 @@ class TeamDynamixInstance:
             )
 
         if id_type == "get":
-            async with self._api_session.get(
+            return await self._api_session.get(
                 f"/{api_version}/api/{endpoint}"
-            ) as response:
-                return await response.json()
+            )
         elif id_type == "post":
-            async with self._api_session.post(
-                f"/{api_version}/api/{endpoint}", data=body
-            ) as response:
-                return await response.json()
+            return await self._api_session.post(
+                f"/{api_version}/api/{endpoint}",
+                json=body
+            )
         else:
             print(f"Expected post or get, got {id_type}")
             raise exceptions.InvalidHTTPMethodException
