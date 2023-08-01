@@ -206,10 +206,19 @@ class TeamDynamixInstance:
         tasks.append(self._populate_ids("AssetAttributes"))
         tasks.append(self._populate_ids("TicketAttributes"))
 
+        await asyncio.gather(*tasks)
+        tasks = []
         if self._default_asset_app_name:
-            tasks.append(self.populate_ids_for_app("AssetStatusIDs", self._default_asset_app_name))
+            tasks.append(self.populate_ids_for_app(
+                "AssetStatusIDs",
+                self._default_asset_app_name
+            ))
         if self._default_ticket_app_name:
-            tasks.append(self.populate_ids_for_app("TicketStatusIDs", self._default_ticket_app_name))
+            tasks.append(self.populate_ids_for_app(
+                "TicketStatusIDs",
+                self._default_ticket_app_name
+            ))
+
         await asyncio.gather(*tasks)
         self._populate_group_ids()
 
