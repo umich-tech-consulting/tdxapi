@@ -6,7 +6,7 @@ A Python wrapper for the [TeamDynamix WebAPI](https://solutions.teamdynamix.com/
 The API can be installed simply through `pip` directly from GitHub like so:
 
 ```
-pip install tdxapi git+https://github.com/owaink/tdxapi.git
+pip install tdxapi git+https://github.com/umich-tech-consulting/tdxapi.git
 ```
 
 This will give you the latest and greatest we have to offer in your Python environment!
