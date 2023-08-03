@@ -530,7 +530,7 @@ class TeamDynamixInstance:
         people = await response.json()
         if (len(people) == 0):
             print(f"No person with uniqname: {alt_id}")
-            raise exceptions.UniqnameDoesNotExistException
+            raise exceptions.UniqnameDoesNotExistException(alt_id)
         if (len(people) >= 2):
             print(f"Found more than one match for uniqname: {alt_id}")
             raise exceptions.MultipleMatchesException
