@@ -35,3 +35,11 @@ class PropertyNotSetException(Exception):
 
 class InvalidParameterException(Exception):
     """Provided parameter is not valid."""
+
+
+class UniqnameDoesNotExistException(Exception):
+    """Uniqname does not exist in TDx."""
+
+
+class MultipleMatchesException(Exception):
+    """More than one match for search."""
