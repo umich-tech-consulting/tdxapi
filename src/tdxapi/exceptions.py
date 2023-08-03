@@ -40,6 +40,15 @@ class InvalidParameterException(Exception):
 class UniqnameDoesNotExistException(Exception):
     """Uniqname does not exist in TDx."""
 
+    def __init__(
+        self,
+        uniqname: str,
+        message: str = "Uniqname does not exist in TDx"
+    ) -> None:
+        self.uniqname: str = uniqname
+        self.message: str = message
+        super().__init__(self.message)
+
 
 class MultipleMatchesException(Exception):
     """More than one match for search."""
