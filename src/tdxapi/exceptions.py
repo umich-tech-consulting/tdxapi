@@ -52,3 +52,7 @@ class UniqnameDoesNotExistException(Exception):
 
 class MultipleMatchesException(Exception):
     """More than one match for search."""
+
+
+class InvalidUniqnameException(Exception):
+    """Uniqname is not 3-8 alpha characters."""
