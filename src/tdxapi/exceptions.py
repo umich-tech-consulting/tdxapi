@@ -53,6 +53,15 @@ class UniqnameDoesNotExistException(Exception):
 class MultipleMatchesException(Exception):
     """More than one match for search."""
 
+    def __init__(
+            self,
+            type: str,
+            message: str = "Multiple matches detected"
+    ) -> None:
+        self.message: str = message
+        self.type: str = type
+        super().__init__(self.message)
+
 
 class InvalidUniqnameException(Exception):
     """Uniqname is not 3-8 alpha characters."""
