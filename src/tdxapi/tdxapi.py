@@ -46,6 +46,16 @@ class TeamDynamixInstance:
             "ID": "ID",
             "Endpoint": "tickets/statuses",
         },
+        "TicketFormIDs": {
+            "Name": "Name",
+            "ID": "ID",
+            "Endpoint": "tickets/forms"
+        },
+        "AssetFormIDs": {
+            "Name": "Name",
+            "ID": "ID",
+            "Endpoint": "assets/forms"
+        },
         "AssetAttributes": {
             "Name": "Name",
             "ID": "ID",
