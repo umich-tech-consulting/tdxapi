@@ -34,8 +34,16 @@ class TeamDynamixInstance:
     # This is used to construct a name -> id dictionary so descriptive names
     # can be used instead of vague IDs
     _populating_dict: dict[str, dict[str, str]] = {
-        "AppIDs": {"Name": "Name", "ID": "AppID", "Endpoint": "applications"},
-        "LocationIDs": {"Name": "Name", "ID": "ID", "Endpoint": "locations"},
+        "AppIDs": {
+            "Name": "Name",
+            "ID": "AppID",
+            "Endpoint": "applications"
+        },
+        "LocationIDs": {
+            "Name": "Name",
+            "ID": "ID",
+            "Endpoint": "locations"
+        },
         "AssetStatusIDs": {
             "Name": "Name",
             "ID": "ID",
@@ -228,6 +236,10 @@ class TeamDynamixInstance:
                 self._default_asset_app_name
             ))
         if self._default_ticket_app_name:
+            tasks.append(self.populate_ids_for_app(
+                "TicketStatusIDs",
+                self._default_ticket_app_name
+            ))
             tasks.append(self.populate_ids_for_app(
                 "TicketFormIDs",
                 self._default_ticket_app_name
