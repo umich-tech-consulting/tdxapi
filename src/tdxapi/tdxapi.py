@@ -520,6 +520,7 @@ class TeamDynamixInstance:
         Returns:
             dict: Dictionary representing the person if found
         """
+        print(f"Searching for person with alt id {alt_id}")
         body: dict[str, str] = {"AlternateID": alt_id}
         response: aiohttp.ClientResponse = \
             await self._make_async_request("post", "people/search", body=body)
@@ -533,7 +534,8 @@ class TeamDynamixInstance:
             raise exceptions.UniqnameDoesNotExistException(alt_id)
         if (len(people) >= 2):
             print(f"Found more than one match for uniqname: {alt_id}")
-            raise exceptions.MultipleMatchesException
+            raise exceptions.MultipleMatchesException("person")
+        print(f"Found person with alt id {alt_id}")
         return people[0]
 
     #####################
