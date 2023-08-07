@@ -223,9 +223,13 @@ class TeamDynamixInstance:
                 "AssetStatusIDs",
                 self._default_asset_app_name
             ))
+            tasks.append(self.populate_ids_for_app(
+                "AssetFormIDs",
+                self._default_asset_app_name
+            ))
         if self._default_ticket_app_name:
             tasks.append(self.populate_ids_for_app(
-                "TicketStatusIDs",
+                "TicketFormIDs",
                 self._default_ticket_app_name
             ))
 
