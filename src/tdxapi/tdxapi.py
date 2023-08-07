@@ -408,10 +408,8 @@ class TeamDynamixInstance:
 
     def search_tickets(  # pylint: disable=too-many-arguments
         self,
-        requester_uid: str,
-        status_names: list[str],
         title: str,
-        responsible_group_name: str = "",
+        criteria: dict[str, Any],
         app_name: str = "",
     ) -> list[dict[str, Any]]:
         """Search for ticket.
@@ -421,33 +419,22 @@ class TeamDynamixInstance:
 
         Args:
             app_name (str): Name of the ticket application
-            requester_uid (str): UID of the requester for the ticket
-            status_names (list): List of names of statuses that ticket can be
             title (str): Title of the ticket
-            responsible_group_name (str, optional):
-            Name of the group ticket is assigned to. Defaults to None.
+            criteria (dict): Dictionary matching search criteria from TDx docs
 
         Returns:
             list: A list of dictionaries representing tickets
         """
         if not app_name:
             app_name = self._default_ticket_app_name
-        status_ids: list[int] = []
-        for status_name in status_names:
+
             status_ids.append(
                 self._content[app_name]["TicketStatusIDs"][status_name]
             )
         app_id = self._content["AppIDs"][app_name]
-        body: dict[str, list[str] | list[int]] = {
-            "RequestorUids": [requester_uid],
-            "StatusIDs": status_ids,
-        }
-        if not responsible_group_name:
-            body["ResponsibilityGroupIDs"] = [
-                self._content["GroupIDs"][responsible_group_name]
-            ]
+
         response = self._make_request(
-            "post", f"{app_id}/tickets/search", body=body
+            "post", f"{app_id}/tickets/search", body=criteria
         )
         tickets = response.json()
 
