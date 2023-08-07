@@ -610,8 +610,9 @@ class TeamDynamixInstance:
 
         # If working with a specific app name,
         # move into that app name's subdictionary
-        if app_name and app_name not in self._content:
-            content[app_name] = {}
+        if app_name:
+            if app_name not in self._content:
+                content[app_name] = {}
             content = self._content[app_name]
 
         if id_type not in content:
