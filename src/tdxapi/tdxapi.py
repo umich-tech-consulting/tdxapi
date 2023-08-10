@@ -428,9 +428,6 @@ class TeamDynamixInstance:
         if not app_name:
             app_name = self._default_ticket_app_name
 
-            status_ids.append(
-                self._content[app_name]["TicketStatusIDs"][status_name]
-            )
         app_id = self._content["AppIDs"][app_name]
 
         response = self._make_request(
