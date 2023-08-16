@@ -551,6 +551,19 @@ class TeamDynamixInstance:
         print(f"Found person matching {criteria}")
         return people[0]
 
+    async def get_person(self, uid: str):
+        print(f"Getting person with uid {uid}")
+        response: aiohttp.ClientResponse = \
+            await self._make_async_request(
+                "get",
+                f"people/{uid}"
+            )
+
+        if not response.ok:
+            print(f"Unable to get user: {response.text}")
+            raise exceptions.RequestFailedException
+        return await response.json()
+    
     #####################
     #                   #
     #      Groups       #
