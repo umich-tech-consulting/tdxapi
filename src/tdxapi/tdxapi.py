@@ -551,7 +551,7 @@ class TeamDynamixInstance:
         print(f"Found person matching {criteria}")
         return people[0]
 
-    async def get_person(self, uid: str):
+    async def get_person(self, uid: str) -> dict[str, Any]:
         print(f"Getting person with uid {uid}")
         response: aiohttp.ClientResponse = \
             await self._make_async_request(
