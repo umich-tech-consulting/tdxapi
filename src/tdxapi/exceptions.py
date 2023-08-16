@@ -1,3 +1,4 @@
+from typing import Any
 """TDXAPI Exceptions."""
 
 
@@ -37,15 +38,15 @@ class InvalidParameterException(Exception):
     """Provided parameter is not valid."""
 
 
-class UniqnameDoesNotExistException(Exception):
-    """Uniqname does not exist in TDx."""
+class PersonDoesNotExistException(Exception):
+    """Matching person does not exist in TDx."""
 
     def __init__(
         self,
-        uniqname: str,
-        message: str = "Uniqname does not exist in TDx"
+        criteria: dict[str, Any],
+        message: str = "Matching person does not exist in TDx"
     ) -> None:
-        self.uniqname: str = uniqname
+        self.criteria: dict[str, Any] = criteria
         self.message: str = message
         super().__init__(self.message)
 

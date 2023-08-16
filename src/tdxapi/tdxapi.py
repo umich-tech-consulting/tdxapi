@@ -521,31 +521,34 @@ class TeamDynamixInstance:
     #                   #
     #####################
 
-    async def search_person(self, alt_id: str) -> dict[str, Any]:
+    async def search_person(self, criteria: dict[str, Any]) -> dict[str, Any]:
         """Search for a person with provided alt_id.
 
         Args:
-            alt_id (str): Alternate ID assigned to person (ie uniqname)
+            criteria (dict[str, Any]): Criteria to match person in TDx
 
         Returns:
             dict: Dictionary representing the person if found
         """
-        print(f"Searching for person with alt id {alt_id}")
-        body: dict[str, str] = {"AlternateID": alt_id}
+        print(f"Searching for person with criteria {criteria}")
         response: aiohttp.ClientResponse = \
-            await self._make_async_request("post", "people/search", body=body)
+            await self._make_async_request(
+                "post",
+                "people/search",
+                body=criteria
+            )
 
         if not response.ok:
             print(f"Unable to search user: {response.text}")
             raise exceptions.RequestFailedException
         people: list[dict[str, Any]] = await response.json()
         if (len(people) == 0):
-            print(f"No person with uniqname: {alt_id}")
-            raise exceptions.UniqnameDoesNotExistException(alt_id)
+            print(f"No person matches {criteria}")
+            raise exceptions.PersonDoesNotExistException(criteria)
         if (len(people) >= 2):
-            print(f"Found more than one match for uniqname: {alt_id}")
+            print(f"Found more than one match for {criteria}")
             raise exceptions.MultipleMatchesException("person")
-        print(f"Found person with alt id {alt_id}")
+        print(f"Found person matching {criteria}")
         return people[0]
 
     #####################
