@@ -563,7 +563,7 @@ class TeamDynamixInstance:
             print(f"Unable to get user: {response.text}")
             raise exceptions.RequestFailedException
         return await response.json()
-    
+
     #####################
     #                   #
     #      Groups       #
