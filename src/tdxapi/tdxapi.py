@@ -700,16 +700,19 @@ class TeamDynamixInstance:
             self._api_session = aiohttp.ClientSession(
                 f"{url}", headers=headers
             )
-
-        if id_type == "get":
-            return await self._api_session.get(
-                f"/{api_version}/api/{endpoint}"
-            )
-        elif id_type == "post":
-            return await self._api_session.post(
-                f"/{api_version}/api/{endpoint}",
-                json=body
-            )
-        else:
-            print(f"Expected post or get, got {id_type}")
-            raise exceptions.InvalidHTTPMethodException
+        try:
+            if id_type == "get":
+                return await self._api_session.get(
+                    f"/{api_version}/api/{endpoint}"
+                )
+            elif id_type == "post":
+                return await self._api_session.post(
+                    f"/{api_version}/api/{endpoint}",
+                    json=body
+                )
+            else:
+                print(f"Expected post or get, got {id_type}")
+                raise exceptions.InvalidHTTPMethodException
+        except aiohttp.ClientError:
+            print("Client Communication Error!")
+            raise exceptions.TDXCommunicationException

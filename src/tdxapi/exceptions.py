@@ -66,3 +66,14 @@ class MultipleMatchesException(Exception):
 
 class InvalidUniqnameException(Exception):
     """Uniqname is not 3-8 alpha characters."""
+
+
+class TDXCommunicationException(Exception):
+    """Error communicating with TDx."""
+
+    def __init__(
+            self,
+            message: str = "Could not connect to TDx"
+    ):
+        self.message: str = message
+        super().__init__(self.message)
