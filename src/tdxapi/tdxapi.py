@@ -414,7 +414,7 @@ class TeamDynamixInstance:
             self,
             ticket_id: str,
             app_name: str = ""
-    ):
+    ) -> list[dict[str, Any]]:
         """Get a ticket's attached assets.
 
         Gets a list of all configuration items for a ticket. This is
