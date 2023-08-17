@@ -5,11 +5,6 @@ from typing import Any
 class ObjectNotFoundException(Exception):
     """Object was not found in remote TDx instance."""
 
-
-class AssetAttachFailedException(Exception):
-    """Attaching asset to ticket failed."""
-
-
 class NotAuthorizedException(Exception):
     """Current user is not authorized in remote TDx instance."""
 
@@ -76,4 +71,19 @@ class TDXCommunicationException(Exception):
             message: str = "Could not connect to TDx"
     ):
         self.message: str = message
+        super().__init__(self.message)
+
+
+class UnableToAttachAssetException(Exception):
+    """Asset could not be attached to ticket, likely already attached."""
+
+    def __init__(
+            self,
+            ticket: str,
+            asset: str,
+            message: str = "Could not attach asset to ticket"
+    ):
+        self.message: str = message
+        self.ticket: str = ticket
+        self.asset: str = asset
         super().__init__(self.message)

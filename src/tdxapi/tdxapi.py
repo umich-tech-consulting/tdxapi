@@ -404,6 +404,10 @@ class TeamDynamixInstance:
                 f"Unable to attach asset {asset_id} to ticket {ticket_id}:\
                     {response.text}"
             )
+            raise exceptions.UnableToAttachAssetException(
+                ticket_id,
+                asset_id
+            )
         return response
 
     def search_tickets(  # pylint: disable=too-many-arguments
