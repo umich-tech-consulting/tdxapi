@@ -552,6 +552,14 @@ class TeamDynamixInstance:
         return people[0]
 
     async def get_person(self, uid: str) -> dict[str, Any]:
+        """Get a specific person based on UID.
+
+        Args:
+            uid (str): Base64 string unique to each person
+
+        Returns:
+            dict: Dictionary representing the person
+        """
         print(f"Getting person with uid {uid}")
         response: aiohttp.ClientResponse = \
             await self._make_async_request(
