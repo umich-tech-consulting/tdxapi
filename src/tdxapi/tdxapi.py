@@ -410,6 +410,34 @@ class TeamDynamixInstance:
             )
         return response
 
+    async def get_ticket_assets(
+            self,
+            ticket_id: str,
+            app_name: str = ""
+    ):
+        """Get a ticket's attached assets.
+
+        Gets a list of all configuration items for a ticket. This is
+        effectively a list of assets that the ticket has attached to it.
+
+        Args:
+            ticket_id (str): Ticket number to get assets for
+            app_name (str): Name of the ticket app to search for ticket in
+
+        Returns:
+            list: List of dictionaries representing configuration items
+        """
+        if not app_name:
+            app_name = self._default_ticket_app_name
+        app_id = self._content["AppIDs"][app_name]
+
+        response = await self._make_async_request(
+            "get", f"{app_id}/tickets/{ticket_id}/assets"
+        )
+        conf_items = await response.json()
+
+        return conf_items
+
     def search_tickets(  # pylint: disable=too-many-arguments
         self,
         title: str,
