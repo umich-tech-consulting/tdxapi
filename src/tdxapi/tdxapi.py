@@ -5,9 +5,12 @@ from typing import Any, Optional
 
 import aiohttp
 import requests
-
+import logging
+import logging.config
 from tdxapi import exceptions
 
+logging.config.fileConfig("tdxapi_logging.conf")
+logger = logging.getLogger('tdxapi')
 
 class TeamDynamixInstance:
     """TeamDynamix Instance Representation.
@@ -110,6 +113,7 @@ class TeamDynamixInstance:
             Asset app to use when none is defined.
             Default to None.
         """
+        logging.debug(f"Creating TDx instance")
         self._domain: str = domain
         self._auth_token: str = auth_token
         self._sandbox: bool = sandbox
@@ -134,9 +138,12 @@ class TeamDynamixInstance:
         Returns:
             str: ID of the object
         """
+        logging.debug(f"Getting id for {name} in {app_name}")
         if id_type:
+            logging.debug(f"Found id {self._content[app_name][id_type][name]}")
             return self._content[app_name][id_type][name]
         else:
+            logging.debug(f"Found id {self._content[app_name][name]}")
             return self._content[app_name][name]
 
     def get_default_app_name(self, app_type: str) -> str:
@@ -148,6 +155,7 @@ class TeamDynamixInstance:
         Returns:
             str: Name of the default app
         """
+        logging.debug(f"Getting default app for {app_type}")
         if app_type == "Asset":
             return self._default_asset_app_name
         if app_type == "Ticket":
@@ -156,6 +164,7 @@ class TeamDynamixInstance:
 
     async def close_api_session(self) -> None:
         """Close the API session."""
+        logging.debug("Closing client session")
         if isinstance(self._api_session, aiohttp.ClientSession):
             await self._api_session.close()
 
@@ -169,6 +178,7 @@ class TeamDynamixInstance:
         Args:
             token (str): Token in JWT for authenticating to TDx
         """
+        logging.debug("Setting new auth_token for TDx access")
         self._auth_token = token
 
     def get_current_user(self) -> dict[str, Any]:
@@ -180,15 +190,17 @@ class TeamDynamixInstance:
         Returns:
             dict: The current user
         """
+        logging.debug("Getting current TDx user")
         response: requests.Response = self._make_request(
             "get", "auth/getuser", True)
         if response.ok:
             user = response.json()
             return user
         if response.status_code == HTTPStatus.UNAUTHORIZED:
+            logging.error("TDx auth_key is not authorized")
             raise exceptions.NotAuthorizedException
 
-        print(
+        logging.error(
             f"Something went wrong \
                 checking authentication: {response.text}"
         )
@@ -203,8 +215,10 @@ class TeamDynamixInstance:
         Returns:
             str: The domain of the TDx instance as a string
         """
+        logging.debug("Getting TDx domain")
         if self._domain:
             return self._domain
+        logging.error("Domain is not set!")
         raise exceptions.PropertyNotSetException
 
     def set_domain(self, domain: str) -> None:
@@ -213,18 +227,21 @@ class TeamDynamixInstance:
         Args:
             domain (str): Domain of remote instance
         """
+        logging.debug(f"Setting TDx domain to {domain}")
         self._domain = domain
 
     async def initialize(self) -> None:
         """Initialize the TDx instance from the remote instance."""
-        print(f"Logged in as {self.get_current_user()['PrimaryEmail']}")
+        logging.debug(f"Initializing TDx instance for {self.get_domain()}")
         tasks: list[Any] = []
         tasks.append(self._populate_ids("AppIDs"))
         tasks.append(self._populate_ids("LocationIDs"))
         tasks.append(self._populate_ids("AssetAttributes"))
         tasks.append(self._populate_ids("TicketAttributes"))
 
+        logging.debug("Running initilization tasks")
         await asyncio.gather(*tasks)
+        logging.debug("First init tasks complete")
         tasks = []
         if self._default_asset_app_name:
             tasks.append(self.populate_ids_for_app(
@@ -246,13 +263,19 @@ class TeamDynamixInstance:
             ))
 
         await asyncio.gather(*tasks)
+        logging.debug("Second init tasks complete")
         self._populate_group_ids()
+        logging.debug("Initialization complete")
 
     async def _populate_all_ids(self) -> None:
         """Populate the TDx object with useful name to ID conversions."""
+        logging.debug("Populating AppIDs")
         await self._populate_ids("AppIDs")
+        logging.debug("Populating LocationIDs")
         await self._populate_ids("LocationIDs")
+        logging.debug("Populating AssetAttributes")
         await self._populate_ids("AssetAttributes")
+        logging.debug("Populating TicketAttributes")
         await self._populate_ids("TicketAttributes")
         return
 
@@ -277,7 +300,7 @@ class TeamDynamixInstance:
             with open("tdx.key", encoding="UTF-8") as keyfile:
                 self.set_auth_token(keyfile.read())
         except FileNotFoundError as exception:
-            print(f"File {filename} not found")
+            logging.error(f"File {filename} not found")
             raise exception
 
     def save_auth_token(self, filename: str = "tdx.key") -> None:
@@ -367,7 +390,7 @@ class TeamDynamixInstance:
             "post", f"{app_id}/assets/{asset['ID']}", body=asset
         )
         if not response.ok:
-            print(f"Unable to update asset: {response.text()}")
+            logging.error(f"Unable to update asset: {response.text()}")
         return response
 
     ###################
@@ -400,7 +423,7 @@ class TeamDynamixInstance:
             "post", f"{app_id}/tickets/{ticket_id}/assets/{asset_id}"
         )
         if not response.ok:
-            print(
+            logging.error(
                 f"Unable to attach asset {asset_id} to ticket {ticket_id}:\
                     {response.text}"
             )
@@ -544,7 +567,7 @@ class TeamDynamixInstance:
             "post", f"{app_id}/tickets/{ticket_id}/feed", body=body
         )
         if not response.ok:
-            print(f"Unable to update ticket status: {response.text}")
+            logging.error(f"Unable to update ticket status: {response.text}")
         return response
 
     #####################
@@ -562,7 +585,7 @@ class TeamDynamixInstance:
         Returns:
             dict: Dictionary representing the person if found
         """
-        print(f"Searching for person with criteria {criteria}")
+        logging.info(f"Searching for person with criteria {criteria}")
         response: aiohttp.ClientResponse = \
             await self._make_async_request(
                 "post",
@@ -571,16 +594,16 @@ class TeamDynamixInstance:
             )
 
         if not response.ok:
-            print(f"Unable to search user: {response.text}")
+            logging.error(f"Unable to search user: {response.text}")
             raise exceptions.RequestFailedException
         people: list[dict[str, Any]] = await response.json()
         if (len(people) == 0):
-            print(f"No person matches {criteria}")
+            logging.error(f"No person matches {criteria}")
             raise exceptions.PersonDoesNotExistException(criteria)
         if (len(people) >= 2):
-            print(f"Found more than one match for {criteria}")
+            logging.error(f"Found more than one match for {criteria}")
             raise exceptions.MultipleMatchesException("person")
-        print(f"Found person matching {criteria}")
+        logging.info(f"Found person matching {criteria}")
         return people[0]
 
     async def get_person(self, uid: str) -> dict[str, Any]:
@@ -592,7 +615,7 @@ class TeamDynamixInstance:
         Returns:
             dict: Dictionary representing the person
         """
-        print(f"Getting person with uid {uid}")
+        logging.info(f"Getting person with uid {uid}")
         response: aiohttp.ClientResponse = \
             await self._make_async_request(
                 "get",
@@ -600,7 +623,7 @@ class TeamDynamixInstance:
             )
 
         if not response.ok:
-            print(f"Unable to get user: {response.text}")
+            logging.error(f"Unable to get user: {response.text}")
             raise exceptions.RequestFailedException
         return await response.json()
 
@@ -614,7 +637,7 @@ class TeamDynamixInstance:
         """Populate the group name to ID dictionary for the TDx instance."""
         response = self._make_request("post", "groups/search")
         if not response.ok:
-            print("Could not populate groups")
+            logging.error("Could not populate groups")
             return
         groups = response.json()
         self._content["GroupIDs"] = {}
@@ -708,7 +731,7 @@ class TeamDynamixInstance:
                 url=url, headers=headers, json=body, timeout=10
             )
         else:
-            print(f"Expected post or get, got {request_type}")
+            logging.error(f"Expected post or get, got {request_type}")
             raise exceptions.InvalidHTTPMethodException
 
         return response
@@ -751,8 +774,8 @@ class TeamDynamixInstance:
                     json=body
                 )
             else:
-                print(f"Expected post or get, got {id_type}")
+                logging.error(f"Expected post or get, got {id_type}")
                 raise exceptions.InvalidHTTPMethodException
         except aiohttp.ClientError:
-            print("Client Communication Error!")
+            logging.error("Client Communication Error!")
             raise exceptions.TDXCommunicationException
