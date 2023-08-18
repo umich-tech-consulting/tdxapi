@@ -12,6 +12,7 @@ from tdxapi import exceptions
 logging.config.fileConfig("tdxapi_logging.conf")
 logger = logging.getLogger('tdxapi')
 
+
 class TeamDynamixInstance:
     """TeamDynamix Instance Representation.
 
@@ -113,7 +114,7 @@ class TeamDynamixInstance:
             Asset app to use when none is defined.
             Default to None.
         """
-        logging.debug(f"Creating TDx instance")
+        logging.debug("Creating TDx instance")
         self._domain: str = domain
         self._auth_token: str = auth_token
         self._sandbox: bool = sandbox
@@ -287,6 +288,7 @@ class TeamDynamixInstance:
             app_name (str): The name of the app in TDx to populate,\
                  eg "ITS Tickets"
         """
+        logging.debug(f"Populating ids for {app_name}")
         await self._populate_ids(app_type, app_name)
 
     def load_auth_token(self, filename: str = "tdx.key") -> None:
@@ -297,10 +299,11 @@ class TeamDynamixInstance:
                  Defaults to tdx.key.
         """
         try:
+            logging.debug("Attempting to load auth token from tdx.key")
             with open("tdx.key", encoding="UTF-8") as keyfile:
                 self.set_auth_token(keyfile.read())
         except FileNotFoundError as exception:
-            logging.error(f"File {filename} not found")
+            logging.error(f"Unable to load auth token from file")
             raise exception
 
     def save_auth_token(self, filename: str = "tdx.key") -> None:
@@ -310,6 +313,7 @@ class TeamDynamixInstance:
             filename (str, optional): File to save the auth token to.\
                  Defaults to tdx.key.
         """
+        logging.debug(f"Saving auth token to {filename}")
         with open(filename, "w+", encoding="UTF-8") as keyfile:
             keyfile.write(str(self._auth_token))
 
@@ -333,6 +337,7 @@ class TeamDynamixInstance:
         Returns:
             dict: Asset as dictionary, includes custom attributes
         """
+        logging.debug(f"Getting asset with id {asset_id}")
         if not app_name:
             app_name = self._default_asset_app_name
         app_id = self._content["AppIDs"][app_name]
