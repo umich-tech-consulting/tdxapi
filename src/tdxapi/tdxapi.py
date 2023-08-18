@@ -9,8 +9,7 @@ import logging
 import logging.config
 from tdxapi import exceptions
 
-logging.config.fileConfig("tdxapi_logging.conf")
-logger = logging.getLogger('tdxapi')
+logging.basicConfig(filename='tdxapi.log', filemode='a', format='%(name)s - %(levelname)s - %(message)s')
 
 
 class TeamDynamixInstance:
