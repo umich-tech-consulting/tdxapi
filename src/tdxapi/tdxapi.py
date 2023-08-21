@@ -8,7 +8,7 @@ import requests
 import logging
 import logging.config
 from tdxapi import exceptions
-
+import json
 logging.basicConfig(level=logging.DEBUG, filename='tdxapi.log', filemode='a', format='%(name)s - %(levelname)s - %(message)s')
 
 
@@ -608,7 +608,7 @@ class TeamDynamixInstance:
             logging.error(f"Found more than one match for {criteria}")
             raise exceptions.MultipleMatchesException("person")
         logging.info(f"Found person matching {criteria}")
-        logging.info(f"{people}")
+        logging.info(f"{json.dumps(people, indent=4)}")
         return people[0]
 
     async def get_person(self, uid: str) -> dict[str, Any]:
