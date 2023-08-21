@@ -608,6 +608,7 @@ class TeamDynamixInstance:
             logging.error(f"Found more than one match for {criteria}")
             raise exceptions.MultipleMatchesException("person")
         logging.info(f"Found person matching {criteria}")
+        logging.info(f"{people}")
         return people[0]
 
     async def get_person(self, uid: str) -> dict[str, Any]:
