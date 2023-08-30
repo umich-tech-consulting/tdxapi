@@ -18,14 +18,14 @@ dynamic = ["dependencies", "version"]
 dependencies = {file = ["requirements.txt"]}
 
 [project.urls]
-"Homepage" = "https://github.com/owaink/tdxapi"
+"Homepage" = "https://github.com/umich-tech-consulting/tdxapi"
 
 [tool.setuptools-git-versioning]
 enabled = true
 version_file = "VERSION"
 count_commits_from_version_file = true
-dev_template = "{tag}.{ccount}+{sha}"
-dirty_template = "{tag}.{ccount}+{sha}"
+dev_template = "{tag}.{ccount}"
+dirty_template = "{tag}.{ccount}"
 
 [tool.black]
 line-length = 79
