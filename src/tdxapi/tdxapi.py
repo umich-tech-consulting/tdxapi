@@ -9,7 +9,18 @@ import logging
 import logging.config
 from tdxapi import exceptions
 import json
-logging.basicConfig(level=logging.DEBUG, filename='tdxapi.log', filemode='a', format='%(name)s - %(levelname)s - %(message)s')
+import yaml
+import jwt
+import sched
+import time
+from datetime import datetime
+import os
+logging.basicConfig(
+    level=logging.DEBUG,
+    filename='tdxapi.log',
+    filemode='a',
+    format='%(name)s - %(levelname)s - %(message)s'
+)
 
 
 class TeamDynamixInstance:
@@ -121,6 +132,37 @@ class TeamDynamixInstance:
         self._default_ticket_app_name: str = default_ticket_app_name
         self._default_asset_app_name: str = default_asset_app_name
         self._api_session: aiohttp.ClientSession | None = api_session
+
+    def login(self) -> None:
+        username = str(os.getenv("TDX_USERNAME"))
+        password = str(os.getenv("TDX_PASSWORD"))
+        logging.debug(f"Logging in as {username}")
+        body: dict[str, str] = {
+            "username": username,
+            "password": password
+        }
+        response: requests.Response = self._make_request(
+            "post", "auth/login", False, body=body)
+        if response.ok:
+            auth_key: str = response.text
+            self.set_auth_token(auth_key)
+
+            decoded_jwt: dict[str, Any] = jwt.decode(
+                auth_key,
+                option={"verify_signature": False}
+            )
+            logging.debug("Scheduling renewal for "
+                          f"{datetime.fromtimestamp(decoded_jwt['exp']-3600)}")
+            jwt_renewer = sched.scheduler(time.time, time.sleep)
+            jwt_renewer.enterabs(
+                decoded_jwt["exp"] - 3600,
+                1,
+                self.login
+            )
+            jwt_renewer.run()
+        else:
+            logging.debug(f"Unable to login as {username}")
+            raise exceptions.NotAuthorizedException
 
     def get_id(
         self,

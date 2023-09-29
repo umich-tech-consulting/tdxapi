@@ -24,8 +24,8 @@ dependencies = {file = ["requirements.txt"]}
 enabled = true
 version_file = "VERSION"
 count_commits_from_version_file = true
-dev_template = "{VERSION}.{ccount}"
-dirty_template = "{VERSION}.{ccount}"
+dev_template = "{tag}.{ccount}"
+dirty_template = "{tag}.{ccount}"
 
 [tool.black]
 line-length = 79
