@@ -159,7 +159,7 @@ class TeamDynamixInstance:
                 1,
                 self.login
             )
-            jwt_renewer.run()
+            jwt_renewer.run(False)
         else:
             logging.debug(f"Unable to login as {username}")
             raise exceptions.NotAuthorizedException
