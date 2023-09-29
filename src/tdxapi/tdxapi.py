@@ -149,8 +149,7 @@ class TeamDynamixInstance:
 
             decoded_jwt: dict[str, Any] = jwt.decode(
                 auth_key,
-                option={"verify_signature": False},
-                algorithms=["HS256"]
+                options={"verify_signature": False}
             )
             logging.debug("Scheduling renewal for "
                           f"{datetime.fromtimestamp(decoded_jwt['exp']-3600)}")
