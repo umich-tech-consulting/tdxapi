@@ -133,7 +133,7 @@ class TeamDynamixInstance:
         self._default_asset_app_name: str = default_asset_app_name
         self._api_session: aiohttp.ClientSession | None = api_session
 
-    def login(self) -> None:
+    async def login(self) -> None:
         username = str(os.getenv("TDX_USERNAME"))
         password = str(os.getenv("TDX_PASSWORD"))
         logging.debug(f"Logging in as {username}")
@@ -141,10 +141,10 @@ class TeamDynamixInstance:
             "username": username,
             "password": password
         }
-        response: requests.Response = self._make_request(
+        response = await self._make_async_request(
             "post", "auth/login", False, body=body)
         if response.ok:
-            auth_key: str = response.text
+            auth_key: str = await response.text()
             self.set_auth_token(auth_key)
 
             decoded_jwt: dict[str, Any] = jwt.decode(
