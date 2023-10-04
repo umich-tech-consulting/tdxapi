@@ -324,6 +324,11 @@ class TeamDynamixInstance:
         await self._populate_ids("AppIDs")
         logging.debug("Populating LocationIDs")
         await self._populate_ids("LocationIDs")
+        
+        logging.debug("Populating AssetAttributes")
+        await self._populate_ids("AssetAttributes")
+        logging.debug("Populating TicketAttributes")
+        await self._populate_ids("TicketAttributes")
         return
 
     async def populate_ids_for_app(self, app_type: str, app_name: str) -> None:
