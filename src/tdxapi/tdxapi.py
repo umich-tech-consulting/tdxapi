@@ -287,6 +287,8 @@ class TeamDynamixInstance:
         tasks: list[Any] = []
         tasks.append(self._populate_ids("AppIDs"))
         tasks.append(self._populate_ids("LocationIDs"))
+        tasks.append(self._populate_ids("AssetAttributes"))
+        tasks.append(self._populate_ids("TicketAttributes"))
 
         logging.debug("Running initilization tasks")
         await asyncio.gather(*tasks)
