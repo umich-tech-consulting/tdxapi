@@ -121,7 +121,7 @@ class TeamDynamixInstance:
         self._default_asset_app_name: str = default_asset_app_name
         self._api_session: aiohttp.ClientSession | None = api_session
 
-    async def load_ids(self, filename: str = "manual_ids.json"):
+    async def load_ids(self, filename: str = "manual_ids.json") -> None:
         with open(filename, 'r') as file:
             ids = json.load(file)
         for app in ids:
