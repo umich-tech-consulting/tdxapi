@@ -804,11 +804,13 @@ class TeamDynamixInstance:
         try:
             if id_type == "get":
                 return await self._api_session.get(
-                    f"/{api_version}/api/{endpoint}"
+                    f"/{api_version}/api/{endpoint}",
+                    headers=headers
                 )
             elif id_type == "post":
                 return await self._api_session.post(
                     f"/{api_version}/api/{endpoint}",
+                    headers=headers,
                     json=body
                 )
             else:
