@@ -79,10 +79,10 @@ class TeamDynamixInstance:
             "Endpoint": "assets/forms"
         },
         "AssetAttributes": {
-            "Name": "Name",
-            "ID": "ID",
-            "Endpoint": f"attributes/custom?componentId=\
-                {_component_ids['Asset']}",
+        "Name": "Name",
+        "ID": "ID",
+        "Endpoint": f"attributes/custom?componentId=\
+            {_component_ids['Asset']}",
         },
         "TicketAttributes": {
             "Name": "Name",
@@ -132,6 +132,15 @@ class TeamDynamixInstance:
         self._default_ticket_app_name: str = default_ticket_app_name
         self._default_asset_app_name: str = default_asset_app_name
         self._api_session: aiohttp.ClientSession | None = api_session
+
+    async def load_ids(self, filename: str = "manual_ids.json") -> None:
+        with open(filename, 'r') as file:
+            ids = json.load(file)
+        for app in ids:
+            if (app["Name"] not in self._content.keys()):
+                self._content[app["Name"]] = {}
+            for attr in app["Attributes"]:
+                self._content[app["Name"]][attr["Name"]] = attr["ID"]
 
     async def login(self) -> None:
         username = str(os.getenv("TDX_USERNAME"))
@@ -315,6 +324,7 @@ class TeamDynamixInstance:
         await self._populate_ids("AppIDs")
         logging.debug("Populating LocationIDs")
         await self._populate_ids("LocationIDs")
+        
         logging.debug("Populating AssetAttributes")
         await self._populate_ids("AssetAttributes")
         logging.debug("Populating TicketAttributes")
@@ -813,11 +823,13 @@ class TeamDynamixInstance:
         try:
             if id_type == "get":
                 return await self._api_session.get(
-                    f"/{api_version}/api/{endpoint}"
+                    f"/{api_version}/api/{endpoint}",
+                    headers=headers
                 )
             elif id_type == "post":
                 return await self._api_session.post(
                     f"/{api_version}/api/{endpoint}",
+                    headers=headers,
                     json=body
                 )
             else:
