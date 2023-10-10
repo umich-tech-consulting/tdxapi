@@ -9,12 +9,10 @@ import logging
 import logging.config
 from tdxapi import exceptions
 import json
-import yaml
 import jwt
-import sched
-import time
 from datetime import datetime
 import os
+import time
 logging.basicConfig(
     level=logging.DEBUG,
     filename='tdxapi.log',
@@ -160,15 +158,9 @@ class TeamDynamixInstance:
                 auth_key,
                 options={"verify_signature": False}
             )
-            logging.debug("Scheduling renewal for "
-                          f"{datetime.fromtimestamp(decoded_jwt['exp']-3600)}")
-            jwt_renewer = sched.scheduler(time.time, time.sleep)
-            jwt_renewer.enterabs(
-                decoded_jwt["exp"] - 3600,
-                1,
-                self.login
-            )
-            jwt_renewer.run(False)
+            logging.debug("Auth token will expire "
+                          f"{datetime.fromtimestamp(decoded_jwt['exp'])}")
+            self._reauth_time = decoded_jwt['exp']
         else:
             logging.debug(f"Unable to login as {username}")
             raise exceptions.NotAuthorizedException
@@ -814,6 +806,9 @@ class TeamDynamixInstance:
             body = {}
 
         if self._auth_token and requires_auth:
+            if (self._reauth_time < time.time()):
+                logging.debug("Auth token expired, reauthenticating...88")
+                await self.login()
             headers["Authorization"] = f"Bearer {self._auth_token}"
 
         if self._api_session is None:
