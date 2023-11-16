@@ -154,13 +154,7 @@ class TeamDynamixInstance:
             auth_key: str = await response.text()
             self.set_auth_token(auth_key)
 
-            decoded_jwt: dict[str, Any] = jwt.decode(
-                auth_key,
-                options={"verify_signature": False}
-            )
-            logging.debug("Auth token will expire "
-                          f"{datetime.fromtimestamp(decoded_jwt['exp'])}")
-            self._reauth_time = decoded_jwt['exp']
+            
         else:
             logging.debug(f"Unable to login as {username}")
             raise exceptions.NotAuthorizedException
@@ -223,6 +217,13 @@ class TeamDynamixInstance:
         """
         logging.debug("Setting new auth_token for TDx access")
         self._auth_token = token
+        decoded_jwt: dict[str, Any] = jwt.decode(
+                token,
+                options={"verify_signature": False}
+            )
+        logging.debug("Auth token will expire "
+                        f"{datetime.fromtimestamp(decoded_jwt['exp'])}")
+        self._reauth_time = decoded_jwt['exp']
 
     def get_current_user(self) -> dict[str, Any]:
         """Get current TDx user.
